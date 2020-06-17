@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: zproxy-ingress
+  namespace: zproxy-ingress
+spec:
+  selector:
+      matchLabels:
+        ingress-controller: zproxy-ingress
+  template:
+    metadata:
+      labels:
+        ingress-controller: zproxy-ingress
+    spec:
+      hostNetwork: true
+      containers:
+      - name: zproxy-ingress
+        image: zproxy-ingress
+        imagePullPolicy: Never
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
