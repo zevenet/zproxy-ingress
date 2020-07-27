@@ -12,7 +12,8 @@ spec:
       labels:
         ingress-controller: zproxy-ingress
     spec:
-      hostNetwork: true
+      dnsPolicy: ClusterFirst
+      serviceAccountName: zproxy-ingress-service-account
       containers:
       - name: zproxy-ingress
         image: zproxy-ingress

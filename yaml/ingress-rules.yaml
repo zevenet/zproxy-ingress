@@ -1,0 +1,67 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-rules
+spec:
+  ingressClassName: zproxy-ingress
+
+  backend:
+    serviceName: testsvc
+    servicePort: 80
+
+  tls:
+  - hosts:
+    - sslexample.foo.com
+    - sslexample2.foo.com
+    secretName: testsecret-tls
+
+  - hosts:
+    - sslexample.bar.com
+    - sslexample2.bar.com
+    secretName: testsecret-tls-2
+
+  rules:
+  - host: foo.bar.com
+    http:
+      paths:
+      - path: /foo/bar
+        pathType: Exact
+        backend:
+          serviceName: service1hosts
+          servicePort: 4200
+
+      - path: /foo/bar1
+        pathType: Prefix
+        backend:
+          serviceName: service1hosts
+          servicePort: 4200
+
+      - path: /foo/bar2
+        pathType: ImplementationSpecific
+        backend:
+          serviceName: service1hosts
+          servicePort: 4200
+
+      - path: /foo/bar2
+        pathType: ImplementationSpecific
+        backend:
+          serviceName: service1hosts
+          servicePort: 4200
+
+      - backend:
+          serviceName: service
+          servicePort: 4200
+
+  - http:
+      paths:
+      - path: /bar
+        backend:
+          serviceName: service1
+          servicePort: 8080
+
+  - http:
+      paths:
+      - path: /bar2
+        backend:
+          serviceName: service2
+          servicePort: 8080

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 DOCKER_PATH="./internal/docker/zproxy-ingress"
 
 # Before running this script, you MUST BE ROOT and you need to have the following tools installed:
@@ -12,7 +14,7 @@ DOCKER_PATH="./internal/docker/zproxy-ingress"
 # STEP 1:
 #   Compile cmd/app/main.go.
 #   The binary will be called "app".
-#~ GOOS=linux go build -o $DOCKER_PATH/app ./cmd/app
+GOOS=linux go build -o $DOCKER_PATH/app ./cmd/app
 
 # STEP 2:
 #   The client container will be created using its Dockerfile.
@@ -21,5 +23,5 @@ docker build -t zproxy-ingress $DOCKER_PATH
 
 # STEP 3:
 #   Clean residual files.
-#~ rm -f $DOCKER_PATH/app
+rm -f $DOCKER_PATH/app
 
