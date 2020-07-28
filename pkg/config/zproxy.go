@@ -58,36 +58,29 @@ func printUpdated(object string, json string, response string) {
 	log.Print(0, message)
 }
 
-func CreateProxyConfig(fileName string, ingressObj *v1beta.Ingress, globalCfg *types.Config) int {
+func CreateProxyConfig(ingressesList []*v1beta.Ingress, globalCfg *types.Config) int {
 
 	var buffFile string //cfg buffer
 
-	// manages tls
-	tls := false
-	if ingressObj.Spec.TLS != nil {
-		tls = true
-	}
-
-	msg := fmt.Sprintf("Ingress obj: %+v", ingressObj)
-	log.Print(1, msg)
-
 	// global cfg
-	addProxyConfigGlobal(&buffFile, ingressObj, globalCfg, tls)
+	addProxyConfigGlobal(&buffFile, globalCfg)
 
 	// listeners
-	addProxyConfigListener(&buffFile, ingressObj, globalCfg, tls)
+	addProxyConfigListener(&buffFile, ingressesList, globalCfg)
 
 	// save file
-	if writeProxyConfig(&buffFile, fileName) != 0 {
+	if writeProxyConfig(&buffFile, globalCfg.Global.ConfigFile) != 0 {
 		return 1
 	}
 
 	return 0
 }
 
-func addProxyConfigGlobal(buff *string, ingressObj *v1beta.Ingress, globalCfg *types.Config, ssl bool) {
+func addProxyConfigGlobal(buff *string, globalCfg *types.Config) {
 
-	*buff = fmt.Sprintf("LogLevel\t%d\n", globalCfg.Global.LogsLevel) +
+	*buff = fmt.Sprintf("Daemon\t%d\n", 0) +
+		fmt.Sprintf("LogLevel\t%d\n", globalCfg.Global.LogsLevel) +
+		fmt.Sprintf("logfacility\t%c\n", '-') +
 		fmt.Sprintf("Timeout\t%d\n", 45) +
 		fmt.Sprintf("ConnTO\t%d\n", 20) +
 		fmt.Sprintf("Alive\t%d\n", 10) +
@@ -101,34 +94,51 @@ func addProxyConfigGlobal(buff *string, ingressObj *v1beta.Ingress, globalCfg *t
 		fmt.Sprintf("\n")
 }
 
+// get index of ingresses services with SSL settings
+func getSslServicesIndex(ingressesList []*v1beta.Ingress, ssl *[]int, nossl *[]int) {
+	for it, ingressObj := range ingressesList {
+		if ingressObj.Spec.TLS != nil {
+			*ssl = append(*ssl, it)
+		} else {
+			*nossl = append(*nossl, it)
+		}
+	}
+}
+
 // Add two listener, one HTTP and another HTTPS, the configuration depend on the tls configuration
-func addProxyConfigListener(buff *string, ingressObj *v1beta.Ingress, globalCfg *types.Config, ssl bool) {
+func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalCfg *types.Config) {
+
+	var sslIndex []int
+	var nosslIndex []int
+	svcId := 1
+	certList := make(map[string]int)
 
 	// https listener
 	*buff += fmt.Sprintf("ListenHTTPS\n") +
 		fmt.Sprintf("\tAddress\t%s\n", globalCfg.Global.DefaultIp) +
 		fmt.Sprintf("\tPort\t%s\n", globalCfg.Global.DefaultPortHTTPS)
 
-	if ssl {
-		addProxyCerts(buff, &ingressObj.Spec.TLS, ingressObj.ObjectMeta.Namespace)
+	getSslServicesIndex(ingressList, &sslIndex, &nosslIndex) // manages tls
+	for _, ind := range sslIndex {
+		addProxyCerts(buff, &ingressList[ind].Spec.TLS, ingressList[ind].ObjectMeta.Namespace, certList)
 	}
 	// add default SSL certificate
 	*buff += fmt.Sprintf("\tCert\t\"%s\"\n", globalCfg.Global.DefaultCert) +
 		fmt.Sprintf("\tCiphers\t\"%s\"\n", "ALL") +
 		fmt.Sprintf("\tDisable SSLv3\n") +
 		fmt.Sprintf("\tSSLHonorCipherOrder\t%d\n\n", 1)
-	if ssl {
-		addProxyConfigServices(buff, ingressObj, ssl)
-	} else {
-		// create default bck with local HTTP svc
-		var localBackend *v1beta.IngressBackend = new(v1beta.IngressBackend)
-		localBackend.ServiceName = globalCfg.Global.DefaultIp
-		port, _ := strconv.Atoi(globalCfg.Global.DefaultPortHTTP)
-		localBackend.ServicePort = intstr.FromInt(port)
 
-		// the local HTTP service will manage the request
-		genProxyConfigService(buff, 0, "", "", localBackend, "", false)
+	// add ssl svc to HTTPS listener
+	for _, ind := range sslIndex {
+		addProxyConfigServices(buff, ingressList[ind], true, &svcId)
 	}
+
+	// create default bck with local HTTP svc
+	var localBackend *v1beta.IngressBackend = new(v1beta.IngressBackend)
+	localBackend.ServiceName = "127.0.0.1"
+	port, _ := strconv.Atoi(globalCfg.Global.DefaultPortHTTP)
+	localBackend.ServicePort = intstr.FromInt(port)
+	genProxyConfigService(buff, 0, "", "", localBackend, "", false)
 
 	// http listener
 	*buff += "End\n\n" +
@@ -138,19 +148,25 @@ func addProxyConfigListener(buff *string, ingressObj *v1beta.Ingress, globalCfg 
 		fmt.Sprintf("\txHTTP\t%d\n", 4) +
 		fmt.Sprintf("\tRewriteLocation\t%d\n\n", 1)
 
-	if !ssl {
-		addProxyConfigServices(buff, ingressObj, ssl)
-		// } else {
-		// TODO: implement redirect to https svc
+	for _, ingObj := range ingressList {
+
+		// add service to listener HTTP without
+		if ingObj.Spec.TLS == nil {
+			addProxyConfigServices(buff, ingObj, false, &svcId)
+			// TODO: implement redirect to https svc for HTTP requests if ingress has TLS cfg.
+			// Now, the respose is not service available.
+			//~ else if ingObj.MetaObj.Annotation.redirectToSSL != nil {
+			//~ addProxyConfigServices(buff, ingObj, true, &svcId)
+		}
 	}
+
 	*buff += "End\n"
 }
 
-func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool) int {
+func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, svcId *int) int {
 
 	host := ""
 	path := ""
-	svcId := 1
 
 	for _, rule := range ingressObj.Spec.Rules {
 
@@ -181,8 +197,8 @@ func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool) 
 				}
 
 				backend := &http.Backend
-				genProxyConfigService(buff, svcId, host, path, backend, ingressObj.ObjectMeta.Namespace, ssl)
-				svcId += 1
+				genProxyConfigService(buff, *svcId, host, path, backend, ingressObj.ObjectMeta.Namespace, ssl)
+				*svcId += 1
 			}
 		}
 	}
@@ -250,7 +266,7 @@ func writeProxyConfig(buff *string, fileName string) int {
 
 // add the certficate directive to the listener. It does not read the secret.
 // the secret event update the certificate file
-func addProxyCerts(buff *string, tlsList *[]v1beta.IngressTLS, namespace string) {
+func addProxyCerts(buff *string, tlsList *[]v1beta.IngressTLS, namespace string, certList map[string]int) {
 
 	fileName := ""
 	msg := ""
@@ -259,18 +275,22 @@ func addProxyCerts(buff *string, tlsList *[]v1beta.IngressTLS, namespace string)
 		// {"hosts":["sslexample.foo.com","sslexample2.foo.com"],"secretName":"testsecret-tls"},
 		// The "hosts" field is not managed
 
-		msg = fmt.Sprintf("Adding the \"%s\" certificate", tlsInfo.SecretName)
-		log.Print(1, msg)
-
 		fileName = GetCertificateFileName(tlsInfo.SecretName, namespace)
+		if certList[fileName] != 1 {
+			// Add to the list of uploaded certificates
+			certList[fileName] = 1
 
-		_, err := os.Stat(fileName)
-		if os.IsNotExist(err) {
-			msg := fmt.Sprintf("The certificate \"%s\" was not found", fileName)
-			log.Print(0, msg)
-		} else {
-			// Add directive to HTTPS listener
-			*buff += fmt.Sprintf("\tCert\t\"%s\"\n", fileName)
+			_, err := os.Stat(fileName)
+			if os.IsNotExist(err) {
+				msg := fmt.Sprintf("The certificate \"%s\" was not found", fileName)
+				log.Print(0, msg)
+			} else {
+				// Add directive to HTTPS listener
+				*buff += fmt.Sprintf("\tCert\t\"%s\"\n", fileName)
+
+				msg = fmt.Sprintf("Adding the \"%s\" certificate", tlsInfo.SecretName)
+				log.Print(1, msg)
+			}
 		}
 	}
 }

@@ -3,8 +3,6 @@ package watchers
 import (
 	"fmt"
 
-	"github.com/juju/fslock"
-
 	types "github.com/zevenet/zproxy-ingress/pkg/types"
 	funcs "github.com/zevenet/zproxy-ingress/pkg/watchers/funcs"
 	v1 "k8s.io/api/core/v1"
@@ -14,8 +12,6 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	cache "k8s.io/client-go/tools/cache"
 )
-
-var lf = "/tmp/proxy_cfg.lock" // lock file
 
 // getListWatch makes a ListWatch of every resource in the cluster.
 func getListWatch(clientset *kubernetes.Clientset, resource string) *cache.ListWatch {
@@ -42,9 +38,7 @@ func getController(listWatch *cache.ListWatch, resourceStruct runtime.Object, re
 			AddFunc: func(obj interface{}) {
 				switch tp := obj.(type) {
 				case *v1beta.Ingress:
-					lock := fslock.New(lf)
-					funcs.UpdateIngressCfg(obj.(*v1beta.Ingress), globalCfg)
-					lock.Unlock()
+					funcs.AddIngress(obj.(*v1beta.Ingress), globalCfg)
 				case *v1.Secret:
 					funcs.CreateCertificateFile(obj.(*v1.Secret))
 				default:
@@ -56,23 +50,19 @@ func getController(listWatch *cache.ListWatch, resourceStruct runtime.Object, re
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				switch tp := oldObj.(type) {
 				case *v1beta.Ingress:
-					lock := fslock.New(lf)
-					funcs.UpdateIngressCfg(newObj.(*v1beta.Ingress), globalCfg)
-					lock.Unlock()
+					funcs.UpdateIngress(oldObj.(*v1beta.Ingress), newObj.(*v1beta.Ingress), globalCfg)
 				case *v1.Secret:
 					funcs.UpdateCertificate(newObj.(*v1.Secret), globalCfg)
 				default:
 					err := fmt.Sprintf("Object not recognised of type %t", tp)
 					panic(err)
 				}
-				logChannel <- fmt.Sprintf("\nUpdated %s:\n* BEFORE: %s\n* NOW: %s", resourceName, oldObj, newObj)
+				//~ logChannel <- fmt.Sprintf("\nUpdated %s:\n* BEFORE: %s\n* NOW: %s", resourceName, oldObj, newObj)
 			},
 			DeleteFunc: func(obj interface{}) {
 				switch tp := obj.(type) {
-				//~ case *v1beta.Ingress:
-				//~ lock := fslock.New(lf)
-				//~ funcs.UpdateIngressCfg(obj.(*v1beta.Ingress), globalCfg)
-				//~ lock.Unlock()
+				case *v1beta.Ingress:
+					funcs.DeleteIngress(obj.(*v1beta.Ingress), globalCfg)
 				case *v1.Secret:
 					funcs.DeleteCertificate(obj.(*v1.Secret), globalCfg)
 				default:
@@ -80,7 +70,7 @@ func getController(listWatch *cache.ListWatch, resourceStruct runtime.Object, re
 					panic(err)
 				}
 
-				logChannel <- fmt.Sprintf("\nDelete %s:\n%s", resourceName, obj)
+				//~ logChannel <- fmt.Sprintf("\nDelete %s:\n%s", resourceName, obj)
 			},
 		},
 	)

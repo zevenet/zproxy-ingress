@@ -1,4 +1,6 @@
+Daemon			0
 LogLevel        #LOGSLEVEL#
+LogFacility		-
 Timeout         45
 ConnTO          20
 Alive           10

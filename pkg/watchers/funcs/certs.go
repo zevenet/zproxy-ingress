@@ -19,8 +19,8 @@ func CreateCertificateFile(cert *v1.Secret) bool {
 	log.Print(2, msg)
 
 	if cert.Data["pem"] == nil && !(cert.Data["tls.crt"] != nil && cert.Data["tls.key"] != nil) {
-		msg = fmt.Sprintf("Skipping the certificate \"%s\" from the \"%s\" namespace because it has not contain the key \"pem\"", cert.ObjectMeta.Name, cert.ObjectMeta.Namespace)
-		log.Print(1, msg)
+		msg = fmt.Sprintf("Skipping the certificate \"%s\" from the \"%s\" namespace because it has not contain the key \"pem\" or \"tls\"", cert.ObjectMeta.Name, cert.ObjectMeta.Namespace)
+		log.Print(2, msg)
 		return false
 	}
 
