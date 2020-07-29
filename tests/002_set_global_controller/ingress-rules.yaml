@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test-001-noclass
+spec:
+  rules:
+  - host: test.002
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: app
+            servicePort: 80
+

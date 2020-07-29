@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test-001
+spec:
+  ingressClassName: zproxy-ingress
+
+  rules:
+  - host: test.001
+    http:
+      paths:
+        - path: /path/test001
+          backend:
+            serviceName: app
+            servicePort: 80
+

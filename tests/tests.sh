@@ -150,7 +150,7 @@ for test in `ls -d */`; do
 
 	if [[ $WRITE_FLAG -eq 1 ]]; then
 		getProxyCfg $OUTPUT_FILE
-		echo ">> saved file $OUTPUT_FILE"
+		echo ">> saved file $test/$OUTPUT_FILE"
 	else
 		getProxyCfg $TMP_FILE
 		MSG=`diff $TMP_FILE $OUTPUT_FILE`

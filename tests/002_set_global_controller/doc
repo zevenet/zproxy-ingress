@@ -1,0 +1,2 @@
+Add ingress without setting the ingressClass.
+Testing the global directive: ingressclass.kubernetes.io/is-default-class: "true"
