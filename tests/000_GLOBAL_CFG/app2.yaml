@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app2-ns
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  namespace: app2-ns
+  labels:
+    app: app2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app2
+  template:
+    metadata:
+      labels:
+        app: app2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2-svc
+  namespace: app2-ns
+  labels:
+    app: app2
+spec:
+  type: ClusterIP
+  selector:
+    app: app2
+  ports:
+    - protocol: TCP
+      port: 80
