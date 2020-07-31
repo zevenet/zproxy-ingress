@@ -1,0 +1,85 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 004-complex-ruleset
+spec:
+  ingressClassName: zproxy-ingress
+
+# default backend for ingress
+  backend:
+    serviceName: app-svc
+    servicePort: 8001
+
+  rules:
+
+  - host: test.004
+    http:
+      paths:
+# 2 backends using a match with vhost and URI of type exact
+      - path: /foo/bar
+        pathType: Exact
+        backend:
+          serviceName: app-svc
+          servicePort: 8002
+
+      - path: /foo/bar
+        pathType: Exact
+        backend:
+          serviceName: app-svc
+          servicePort: 8003
+
+# match with vhost and URI of type prefix
+      - path: /foo/bar
+        pathType: Prefix
+        backend:
+          serviceName: app-svc
+          servicePort: 8003
+
+# match with vhost and URI of type ImplementationSpecific
+      - path: /foo/bar2
+        pathType: ImplementationSpecific
+        backend:
+          serviceName: app-svc
+          servicePort: 8004
+
+# match with vhost and URI of type ImplementationSpecific
+      - path: /foo/bar3
+        pathType: ImplementationSpecific
+        backend:
+          serviceName: app-svc
+          servicePort: 8005
+
+# match with vhost
+      - backend:
+          serviceName: app-svc
+          servicePort: 8006
+
+# match with vhost
+  - host: test2.004
+    http:
+      paths:
+      - backend:
+          serviceName: app-svc
+          servicePort: 8002
+
+# match with URI
+  - http:
+      paths:
+      - path: /bar2
+        backend:
+          serviceName: app-svc
+          servicePort: 8009
+
+# 2 backends using a match with URI
+  - http:
+      paths:
+      - path: /bar
+        backend:
+          serviceName: app-svc
+          servicePort: 8007
+
+      - path: /bar
+        backend:
+          serviceName: app-svc
+          servicePort: 8008
+

@@ -1,0 +1,5 @@
+- use the same certificate in two services. it should should be configured only once.
+
+- the default backend will be configured in the end.
+
+- only allow one default backend for the controller.

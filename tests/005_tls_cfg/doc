@@ -1,0 +1,5 @@
+- Add different certificates: pem and tls
+
+- set a certificate that does not exist in the current namespace: cert-tls-2. It will use the default cert
+
+- set a svc without certificate. It will use the default one. 005.default

@@ -188,9 +188,9 @@ func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, 
 						if pathType == "Exact" {
 							path = "^" + http.Path + "$"
 						} else if pathType == "Prefix" {
-							path = "^" + http.Path
-							// else implementations, the request is accepted if the pattern matches in any part of the URI
+							path = "^" + http.Path + "(?:/|$)"
 						} else {
+							// the request is accepted if the pattern matches in any part of the URI
 							path = http.Path
 						}
 					}

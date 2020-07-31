@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 007-app-ingress
+spec:
+  ingressClassName: zproxy-ingress
+
+  backend:
+    serviceName: app-svc
+    servicePort: 808
+
+  rules:
+  - host: 007.app
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app-svc
+          servicePort: 80
