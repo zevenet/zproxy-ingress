@@ -26,7 +26,7 @@ spec:
         pathType: Exact
         backend:
           serviceName: app-svc
-          servicePort: 8003
+          servicePort: 8012
 
 # match with vhost and URI of type prefix
       - path: /foo/bar
@@ -60,7 +60,7 @@ spec:
       paths:
       - backend:
           serviceName: app-svc
-          servicePort: 8002
+          servicePort: 8007
 
 # match with URI
   - http:
@@ -68,7 +68,7 @@ spec:
       - path: /bar2
         backend:
           serviceName: app-svc
-          servicePort: 8009
+          servicePort: 8008
 
 # 2 backends using a match with URI
   - http:
@@ -76,10 +76,10 @@ spec:
       - path: /bar
         backend:
           serviceName: app-svc
-          servicePort: 8007
+          servicePort: 8009
 
       - path: /bar
         backend:
           serviceName: app-svc
-          servicePort: 8008
+          servicePort: 8019
 

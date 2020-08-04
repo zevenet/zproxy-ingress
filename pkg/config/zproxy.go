@@ -13,6 +13,11 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
+type service struct {
+	backendList []v1beta.IngressBackend
+	path        string
+}
+
 func checkProxyConfig(globalCfg *types.Config) int {
 
 	cmdLine := globalCfg.Global.BinPath + " -f " + globalCfg.Global.ConfigFile + " -c"
@@ -105,11 +110,45 @@ func getSslServicesIndex(ingressesList []*v1beta.Ingress, ssl *[]int, nossl *[]i
 	}
 }
 
+// the function set the svc name as svc-default when the svcId parameter is set to 0
+func genProxyConfigService(buff *string, svcId int, host string, path string, backendList *[]v1beta.IngressBackend, namespace string, ssl bool) {
+
+	// Creating svc
+	if svcId == 0 {
+		*buff += fmt.Sprintf("\tService \"svc%s\"\n", "-default")
+	} else {
+		*buff += fmt.Sprintf("\tService \"svc%d\"\n", svcId)
+	}
+
+	if host != "" {
+		*buff += fmt.Sprintf("\t\tHeadRequire \"Host: %s\"\n", host)
+	}
+	if path != "" {
+		*buff += fmt.Sprintf("\t\tUrl \"%s\"\n", path)
+	}
+
+	if len(*backendList) > 0 {
+		for _, bck := range *backendList {
+			backendName := bck.ServiceName
+			if namespace != "" {
+				backendName += "."
+				backendName += namespace
+			}
+
+			*buff += fmt.Sprintf("\t\tBackEnd\n\t\t\tAddress %s\n\t\t\tPort %d\n\t\tEnd\n",
+				backendName, bck.ServicePort.IntVal)
+		}
+	}
+
+	*buff += fmt.Sprintf("\tEnd\n\n")
+}
+
 // Add two listener, one HTTP and another HTTPS, the configuration depend on the tls configuration
 func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalCfg *types.Config) {
 
 	var sslIndex []int
 	var nosslIndex []int
+	var bckList []v1beta.IngressBackend
 	svcId := 1
 	certList := make(map[string]int)
 
@@ -138,7 +177,8 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 	localBackend.ServiceName = "127.0.0.1"
 	port, _ := strconv.Atoi(globalCfg.Global.DefaultPortHTTP)
 	localBackend.ServicePort = intstr.FromInt(port)
-	genProxyConfigService(buff, 0, "", "", localBackend, "", false)
+	bckList = append(bckList, *localBackend)
+	genProxyConfigService(buff, 0, "", "", &bckList, "", false)
 
 	// http listener
 	*buff += "End\n\n" +
@@ -163,12 +203,61 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 	*buff += "End\n"
 }
 
+func createPath(pathStr string, pathType v1beta.PathType) string {
+	// Create path
+	path := ""
+	if pathStr != "" {
+		// Adding path type
+		if pathType != "" {
+			if pathType == "Exact" {
+				path = "^" + pathStr + "$"
+			} else if pathType == "Prefix" {
+				path = "^" + pathStr + "(?:/|$)"
+			} else {
+				// the request is accepted if the pattern matches in any part of the URI
+				path = pathStr
+			}
+		}
+	}
+	return path
+}
+
+func createService(svcList *[]service, path string, backend *v1beta.IngressBackend) {
+	var svc service
+	svc.path = path
+	svc.backendList = append(svc.backendList, *backend)
+	*svcList = append(*svcList, svc)
+}
+
+func addBackendToService(svcList *[]service, path string, backendOri *v1beta.IngressBackend) {
+	found := 0
+	backend := backendOri.DeepCopy()
+
+	if len(*svcList) == 0 {
+		createService(svcList, path, backend)
+	} else {
+		for it, svcIt := range *svcList {
+			if path == svcIt.path {
+				(*svcList)[it].backendList = append(svcIt.backendList, *backend)
+				found = 1
+				break
+			}
+		}
+		// New entry
+		if found == 0 {
+			createService(svcList, path, backend)
+		}
+	}
+
+}
+
 func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, svcId *int) int {
 
-	host := ""
-	path := ""
+	var svcList []service
+	var host string
 
 	for _, rule := range ingressObj.Spec.Rules {
+		svcList = nil
 
 		// Create host header
 		host = ""
@@ -177,27 +266,15 @@ func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, 
 		}
 
 		if rule.IngressRuleValue.HTTP != nil {
+			// creating svc structs
 			for _, http := range rule.IngressRuleValue.HTTP.Paths {
+				path := createPath(http.Path, *http.PathType)
+				addBackendToService(&svcList, path, &http.Backend)
+			}
 
-				// Create path
-				path = ""
-				if http.Path != "" {
-					pathType := *http.PathType
-					// Adding path type
-					if pathType != "" {
-						if pathType == "Exact" {
-							path = "^" + http.Path + "$"
-						} else if pathType == "Prefix" {
-							path = "^" + http.Path + "(?:/|$)"
-						} else {
-							// the request is accepted if the pattern matches in any part of the URI
-							path = http.Path
-						}
-					}
-				}
-
-				backend := &http.Backend
-				genProxyConfigService(buff, *svcId, host, path, backend, ingressObj.ObjectMeta.Namespace, ssl)
+			// print
+			for _, svc := range svcList {
+				genProxyConfigService(buff, *svcId, host, svc.path, &svc.backendList, ingressObj.ObjectMeta.Namespace, ssl)
 				*svcId += 1
 			}
 		}
@@ -205,40 +282,12 @@ func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, 
 
 	// manage the default service
 	if ingressObj.Spec.Backend != nil {
-		genProxyConfigService(buff, 0, "", "", ingressObj.Spec.Backend, ingressObj.ObjectMeta.Namespace, ssl)
+		var bckList []v1beta.IngressBackend
+		bckList = append(bckList, *ingressObj.Spec.Backend)
+		genProxyConfigService(buff, 0, "", "", &bckList, ingressObj.ObjectMeta.Namespace, ssl)
 	}
 
 	return 0
-}
-
-// the function set the svc name as svc-default when the svcId parameter is set to 0
-func genProxyConfigService(buff *string, svcId int, host, path string, backend *v1beta.IngressBackend, namespace string, ssl bool) {
-
-	// Creating svc
-	if svcId == 0 {
-		*buff += fmt.Sprintf("\tService \"svc%s\"\n", "-default")
-	} else {
-		*buff += fmt.Sprintf("\tService \"svc%d\"\n", svcId)
-	}
-
-	if host != "" {
-		*buff += fmt.Sprintf("\t\tHeadRequire \"Host: %s\"\n", host)
-	}
-	if path != "" {
-		*buff += fmt.Sprintf("\t\tUrl \"%s\"\n", path)
-	}
-
-	if namespace != "" {
-		backend.ServiceName += "."
-		backend.ServiceName += namespace
-	}
-
-	if backend != nil {
-		*buff += fmt.Sprintf("\t\tBackEnd\n\t\t\tAddress %s\n\t\t\tPort %d\n\t\tEnd\n",
-			backend.ServiceName, backend.ServicePort.IntVal)
-	}
-
-	*buff += fmt.Sprintf("\tEnd\n\n")
 }
 
 func writeProxyConfig(buff *string, fileName string) int {
