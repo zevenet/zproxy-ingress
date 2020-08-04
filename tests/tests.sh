@@ -13,7 +13,7 @@ CFG_YAML_DIR="../yaml"
 GLOBAL_CFG_YAML="000_GLOBAL_CFG/"
 LOG_ERR_REGEXP='err'
 
-TEST_GRACE_TIME=15	# time to wait before checking the proxy cfg
+TEST_GRACE_TIME=8	# time to wait before checking the proxy cfg
 TEST_NAME=""
 REPORT_FILE=""
 WRITE_FLAG=0
@@ -58,7 +58,7 @@ function getProxyPodName
 
 function getProxyCfg
 {
-	kubectl exec -it $PROXY_PODNAME -n $PROXY_NAMESPACE -- cat $PROXY_FILE > $1
+	kubectl exec -it $PROXY_PODNAME -n $PROXY_NAMESPACE -- cat $PROXY_FILE | sed 's/\r//g' > $1
 }
 
 function checkLogs
