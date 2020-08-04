@@ -200,6 +200,15 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 		}
 	}
 
+	// set default backend. Set the first one
+	for _, ingressObj := range ingressList {
+		if ingressObj.Spec.Backend != nil {
+			bckList := []v1beta.IngressBackend{*ingressObj.Spec.Backend}
+			genProxyConfigService(buff, 0, "", "", &bckList, ingressObj.ObjectMeta.Namespace, false)
+			break
+		}
+	}
+
 	*buff += "End\n"
 }
 
@@ -278,13 +287,6 @@ func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, 
 				*svcId += 1
 			}
 		}
-	}
-
-	// manage the default service
-	if ingressObj.Spec.Backend != nil {
-		var bckList []v1beta.IngressBackend
-		bckList = append(bckList, *ingressObj.Spec.Backend)
-		genProxyConfigService(buff, 0, "", "", &bckList, ingressObj.ObjectMeta.Namespace, ssl)
 	}
 
 	return 0
