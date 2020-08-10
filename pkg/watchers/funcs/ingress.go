@@ -3,6 +3,7 @@ package funcs
 import (
 	"fmt"
 	"github.com/juju/fslock"
+	"time"
 
 	config "github.com/zevenet/zproxy-ingress/pkg/config"
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
@@ -44,15 +45,22 @@ func getIngressIndex(oldIngressObj *v1beta.Ingress) int {
 
 func updateIngressCfg(ingressObjList []*v1beta.Ingress, globalCfg *types.Config) bool {
 
+    start := time.Now()
+
 	if config.CreateProxyConfig(ingressObjList, globalCfg) != 0 {
 		log.Print(0, "Error creating the config file")
 		return false
 	}
 
-	// Reload
 	if config.ReloadDaemon(globalCfg) != 0 {
 		log.Print(0, "Error reloading zproxy daemon")
 		return false
+	}
+
+	if log.GetLevel() > 0 {
+		elapsed := time.Since(start)
+		msg := fmt.Sprintf("The reloading took \"%s\"", elapsed)
+		log.Print(1, msg)
 	}
 
 	log.Print(1, "Ingress configuration was reloaded properly")

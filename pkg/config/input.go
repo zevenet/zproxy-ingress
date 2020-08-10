@@ -22,9 +22,9 @@ func Init() *types.Config {
 		panic(err)
 	}
 
-	if cfg.Global.ClientLogsLevel > 0 {
-		log.SetLevel(cfg.Global.ClientLogsLevel)
-		msg := fmt.Sprintf("%+v\n", cfg.Global)
+	if cfg.Client.ClientLogsLevel > 0 {
+		log.SetLevel(cfg.Client.ClientLogsLevel)
+		msg := fmt.Sprintf("%+v\n", cfg)
 		log.Print(1, msg)
 	}
 

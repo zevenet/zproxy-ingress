@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 008-default
+spec:
+  ingressClassName: zproxy-ingress
+
+  backend:
+    serviceName: app-svc
+    servicePort: 80
+
+  tls:
+  - hosts:
+    - 008.default
+    secretName: tls-cert
+
+  rules:
+  - host: 008.default
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app-svc
+          servicePort: 80

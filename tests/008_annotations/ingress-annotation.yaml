@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 008-annot
+  annotations:
+    zproxy.ingress.kubernetes.io/service-session-type: "URL"
+    zproxy.ingress.kubernetes.io/service-session-ttl: "120"
+    zproxy.ingress.kubernetes.io/service-session-id: "SessionID"
+
+    zproxy.ingress.kubernetes.io/service-redirect-url: "https://zevenet.com"
+    zproxy.ingress.kubernetes.io/service-redirect-code: "307"
+    zproxy.ingress.kubernetes.io/service-redirect-type: "default"
+
+    zproxy.ingress.kubernetes.io/service-cookie-name: "SESSIONCOOKIE"
+    zproxy.ingress.kubernetes.io/service-cookie-ttl: "1600"
+    zproxy.ingress.kubernetes.io/service-cookie-domain: "zevenet.com"
+    zproxy.ingress.kubernetes.io/service-cookie-path: "/subpath"
+
+    zproxy.ingress.kubernetes.io/service-strict-transport-security-ttl: "16000000"
+spec:
+  ingressClassName: zproxy-ingress
+
+  tls:
+  - hosts:
+    - 008.annot
+    secretName: tls-cert
+
+  rules:
+  - host: 008.annot
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app-svc
+          servicePort: 80

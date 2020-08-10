@@ -26,3 +26,8 @@ func SetLevel(cfgLevel int) {
 	msg := fmt.Sprintf("Setting log level to \"%d\"...", level)
 	Print(0, msg)
 }
+
+// Overwrite the logs level
+func GetLevel() int {
+	return level
+}

@@ -15,7 +15,7 @@ func main() {
 
 	// Read input configuration
 	globalConfig := config.Init()
-	controllerName = globalConfig.Global.ControllerName
+	controllerName = globalConfig.Client.ControllerName
 	log.Print(0, "Read input configuration...")
 
 	clientIngress := auth.GetClienset()

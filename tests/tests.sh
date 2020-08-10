@@ -13,7 +13,7 @@ CFG_YAML_DIR="../yaml"
 GLOBAL_CFG_YAML="000_GLOBAL_CFG/"
 LOG_ERR_REGEXP='err'
 
-TEST_GRACE_TIME=3	# time to wait before checking the proxy cfg
+TEST_GRACE_TIME=5	# time to wait before checking the proxy cfg
 TEST_NAME=""
 REPORT_FILE=""
 WRITE_FLAG=0

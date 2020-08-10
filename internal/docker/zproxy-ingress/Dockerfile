@@ -18,7 +18,9 @@ RUN apt-get update
 RUN apt-get install -y zproxy
 
 # load container parameters
-COPY ./container_params.conf /container_params.conf
+COPY ./container_params.conf /tmp.conf
+RUN grep -Ev '^\s*#' /tmp.conf > /container_params.conf
+RUN grep -Ev '^\s*\[' /container_params.conf > /env.conf
 COPY ./ingress.tpl /ingress.tpl
 
 # After compiling the Golang client, copy the binary to / and make it the entrypoint
@@ -29,19 +31,24 @@ COPY ./zencert.pem /certs/zencert.pem
 COPY ./dh2048.pem /dh2048.pem
 COPY ./start.sh /start.sh
 COPY ./ingress.tpl /ingress.cfg
-RUN source /container_params.conf && \
-	sed -Ei "s|#CONFIGFILE#|$configFile|g" /start.sh && \
-	sed -Ei "s|#DAEMONCHECKTIMEOUT#|$daemonCheckTimeout|g" /start.sh && \
-	sed -Ei "s|#BINPATH#|$binPath|g" /start.sh && \
-	sed -Ei "s|#SOCKETFILE#|$socketFile|g" /ingress.cfg && \
-	sed -Ei "s|#DEFAULTIP#|$defaultIp|g" /ingress.cfg && \
-	sed -Ei "s|#DEFAULTPORT#|$defaultPortHTTP|g" /ingress.cfg && \
-	sed -Ei "s|#LOGSLEVEL#|$logsLevel|g" /ingress.cfg
 
-# add [Global] header to params
-RUN sed -i '0,/^/s//[Global]\n/' /container_params.conf
+RUN source /env.conf && \
+	sed -Ei "s|#CONFIGFILE#|$ConfigFile|g" /start.sh && \
+	sed -Ei "s|#DAEMONCHECKTIMEOUT#|$DaemonCheckTimeout|g" /start.sh && \
+	sed -Ei "s|#BINPATH#|$BinPath|g" /start.sh && \
+	sed -Ei "s|#SOCKETFILE#|$SocketFile|g" /ingress.cfg && \
+	sed -Ei "s|#LISTENERIP#|$ListenerIP|g" /ingress.cfg && \
+	sed -Ei "s|#HTTPPORT#|$HTTPPort|g" /ingress.cfg && \
+	sed -Ei "s|#TOTALTO#|$TotalTO|g" /ingress.cfg && \
+	sed -Ei "s|#CONNTO#|$ConnTO|g" /ingress.cfg && \
+	sed -Ei "s|#ALIVETO#|$AliveTO|g" /ingress.cfg && \
+	sed -Ei "s|#CLIENTTO#|$ClientTO|g" /ingress.cfg && \
+	sed -Ei "s|#DHFILE#|$DHFile|g" /ingress.cfg && \
+	sed -Ei "s|#ECDHCURVE#|$ECDHCurve|g" /ingress.cfg && \
+	sed -Ei "s|#LOGSLEVEL#|$LogsLevel|g" /ingress.cfg
 
-# remove variables that are not for goclient
-RUN sed -i 's/^daemonCheckTimeout.*$//' /container_params.conf
+
+# remove tmp files
+RUN rm /env.conf /tmp.conf
 
 CMD [ "/bin/bash", "-c", "/start.sh" ]
