@@ -45,7 +45,7 @@ func getIngressIndex(oldIngressObj *v1beta.Ingress) int {
 
 func updateIngressCfg(ingressObjList []*v1beta.Ingress, globalCfg *types.Config) bool {
 
-    start := time.Now()
+	start := time.Now()
 
 	if config.CreateProxyConfig(ingressObjList, globalCfg) != 0 {
 		log.Print(0, "Error creating the config file")

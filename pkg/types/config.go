@@ -10,30 +10,30 @@ type Config struct {
 		ClientLogsLevel         int
 	}
 	Global struct {
-		BinPath          string
-		BinCtlPath       string
-		ConfigFile       string
-		SocketFile       string
-		LogsLevel        int
-		DHFile           string
-		ECDHCurve        string
-		TotalTO          int
-		ConnTO           int
-		AliveTO          int
-		ClientTO         int
-		Ignore100Continue   int
+		BinPath           string
+		BinCtlPath        string
+		ConfigFile        string
+		SocketFile        string
+		LogsLevel         int
+		DHFile            string
+		ECDHCurve         string
+		TotalTO           int
+		ConnTO            int
+		AliveTO           int
+		ClientTO          int
+		Ignore100Continue int
 	}
 	Listener struct {
-		ListenerIP       string
-		HTTPPort  int
-		HTTPSPort int
+		ListenerIP string
+		HTTPPort   int
+		HTTPSPort  int
 
-		Err414          string
-		Err500          string
-		Err501          string
-		Err503          string
-		XHTTP           int
-		RewriteLocation int
+		Err414               string
+		Err500               string
+		Err501               string
+		Err503               string
+		XHTTP                int
+		RewriteLocation      int
 		RemoveRequestHeader  []string
 		RemoveResponseHeader []string
 		AddRequestHeader     []string
@@ -41,7 +41,7 @@ type Config struct {
 
 		DefaultCert         string
 		Ciphers             string
-		DisableSSLProtocol        []string
+		DisableSSLProtocol  []string
 		SSLHonorCipherOrder int
 	}
 	Service struct {

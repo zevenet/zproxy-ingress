@@ -1,11 +1,11 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
-	"bufio"
 
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
 	types "github.com/zevenet/zproxy-ingress/pkg/types"
@@ -14,13 +14,12 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-
 type service struct {
 	backendList []v1beta.IngressBackend
 	path        string
 }
 
-func printConfigError( cfgFile string, errString string) {
+func printConfigError(cfgFile string, errString string) {
 	f, err := os.Open(cfgFile)
 
 	if err != nil {
@@ -137,19 +136,19 @@ func getSslServicesIndex(ingressesList []*v1beta.Ingress, ssl *[]int, nossl *[]i
 	}
 }
 
-func addServiceRedirect(buff *string, globalCfg  *types.Config, ingress *v1beta.Ingress, redirectFlag *int) {
+func addServiceRedirect(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress, redirectFlag *int) {
 	redURL := globalCfg.Service.RedirectURL
 	redCode := globalCfg.Service.RedirectCode
 	redType := globalCfg.Service.RedirectType
 
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-url"] != "" {
-		redURL = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-url"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-url"] != "" {
+		redURL = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-url"]
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-code"] != "" {
-		redCode, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-code"])
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-code"] != "" {
+		redCode, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-code"])
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-type"] != "" {
-		redType = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-redirect-type"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-type"] != "" {
+		redType = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-redirect-type"]
 	}
 
 	if redURL != "" {
@@ -169,14 +168,14 @@ func addServiceSession(buff *string, globalCfg *types.Config, ingress *v1beta.In
 	sessionTTL := globalCfg.Service.SessionTTL
 	sessionID := globalCfg.Service.SessionID
 
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-type"] != "" {
-		sessionType = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-type"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-type"] != "" {
+		sessionType = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-type"]
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-ttl"] != "" {
-		sessionTTL, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-ttl"])
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-ttl"] != "" {
+		sessionTTL, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-ttl"])
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-id"] != "" {
-		sessionID = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-session-id"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-id"] != "" {
+		sessionID = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-session-id"]
 	}
 
 	if sessionType != "" {
@@ -187,9 +186,9 @@ func addServiceSession(buff *string, globalCfg *types.Config, ingress *v1beta.In
 		*	  TTL     120
 		*	  ID      "sessid"
 		*	End
-        */
+		 */
 		if sessionType == "PARAM" || sessionType == "URL" || sessionType == "COOKIE" {
-			idStr = fmt.Sprintf( "\t\t\tID\t\"%s\"\n", sessionID )
+			idStr = fmt.Sprintf("\t\t\tID\t\"%s\"\n", sessionID)
 		}
 		*buff += fmt.Sprintf("\t\tSession\n\t\t\tType\t%s\n\t\t\tTTL\t%d\n%s\t\tEnd\n",
 			sessionType, sessionTTL, idStr)
@@ -198,22 +197,22 @@ func addServiceSession(buff *string, globalCfg *types.Config, ingress *v1beta.In
 
 func addServiceCookie(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress) {
 
-	cookieName :=	 globalCfg.Service.CookieName
-	cookieTTL := 	 globalCfg.Service.CookieTTL
-	cookiePath :=	 globalCfg.Service.CookiePath
-	cookieDomain :=	 globalCfg.Service.CookieDomain
+	cookieName := globalCfg.Service.CookieName
+	cookieTTL := globalCfg.Service.CookieTTL
+	cookiePath := globalCfg.Service.CookiePath
+	cookieDomain := globalCfg.Service.CookieDomain
 
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-name"] != "" {
-		cookieName = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-name"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-name"] != "" {
+		cookieName = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-name"]
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-ttl"] != "" {
-		cookieTTL, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-ttl"])
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-ttl"] != "" {
+		cookieTTL, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-ttl"])
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-path"] != "" {
-		cookiePath = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-path"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-path"] != "" {
+		cookiePath = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-path"]
 	}
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-domain"] != "" {
-		cookieDomain = ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-cookie-domain"]
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-domain"] != "" {
+		cookieDomain = ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-cookie-domain"]
 	}
 
 	if cookieName != "" {
@@ -224,14 +223,14 @@ func addServiceCookie(buff *string, globalCfg *types.Config, ingress *v1beta.Ing
 
 func addServiceTransportSecurity(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress) {
 
-	strictTransport :=	 globalCfg.Service.StrictTransportSecurity
+	strictTransport := globalCfg.Service.StrictTransportSecurity
 
 	if ingress.Spec.TLS == nil {
 		return
 	}
 
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-strict-transport-security-ttl"] != "" {
-		strictTransport , _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/service-strict-transport-security-ttl"])
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-strict-transport-security-ttl"] != "" {
+		strictTransport, _ = strconv.Atoi(ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/service-strict-transport-security-ttl"])
 	}
 
 	if strictTransport != 0 {
@@ -241,12 +240,12 @@ func addServiceTransportSecurity(buff *string, globalCfg *types.Config, ingress 
 }
 
 //
-func getServiceBackendHTTPS (globalCfg *types.Config, ingress *v1beta.Ingress) string {
+func getServiceBackendHTTPS(globalCfg *types.Config, ingress *v1beta.Ingress) string {
 
 	flag := globalCfg.Service.HTTPSBackends
 
-	if ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/backend-https"] != "" {
-		flag, _ = strconv.ParseBool(ingress.Annotations[globalCfg.Client.AnnotationPrefix + "/backend-https"])
+	if ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/backend-https"] != "" {
+		flag, _ = strconv.ParseBool(ingress.Annotations[globalCfg.Client.AnnotationPrefix+"/backend-https"])
 	}
 
 	backendHttps := ""
@@ -313,7 +312,7 @@ func genProxyConfigService(buff *string, svcId int, host string, path string, gl
 }
 
 // Set up the parameters for HTTP(S) traffic
-func addProxyConfigListenerParamsPlain (buff *string, globalCfg *types.Config) {
+func addProxyConfigListenerParamsPlain(buff *string, globalCfg *types.Config) {
 
 	if globalCfg.Listener.Err414 != "" {
 		*buff += fmt.Sprintf("\tErr414\t\"%s\"\n", globalCfg.Listener.Err414)
@@ -346,7 +345,7 @@ func addProxyConfigListenerParamsPlain (buff *string, globalCfg *types.Config) {
 
 // Set up the parameters for SSL listeners
 // this function fills the sslIndex slice
-func addProxyConfigListenerParamsSSL (buff *string, globalCfg *types.Config, ingressList []*v1beta.Ingress, sslIndex *[]int) {
+func addProxyConfigListenerParamsSSL(buff *string, globalCfg *types.Config, ingressList []*v1beta.Ingress, sslIndex *[]int) {
 	certList := make(map[string]int)
 
 	addProxyConfigListenerParamsPlain(buff, globalCfg)
@@ -354,7 +353,7 @@ func addProxyConfigListenerParamsSSL (buff *string, globalCfg *types.Config, ing
 	for ind, ing := range ingressList {
 		if ing.Spec.TLS != nil {
 			addProxyCerts(buff, &ing.Spec.TLS, ing.ObjectMeta.Namespace, certList)
-			*sslIndex = append( *sslIndex, ind)
+			*sslIndex = append(*sslIndex, ind)
 		}
 	}
 
@@ -369,7 +368,7 @@ func addProxyConfigListenerParamsSSL (buff *string, globalCfg *types.Config, ing
 }
 
 // This backend is to forward the request to HTTP listener, for HTTPS request that are defined without TLS configuration
-func addRedirectToHTTPService (buff *string, globalCfg *types.Config) {
+func addRedirectToHTTPService(buff *string, globalCfg *types.Config) {
 	var localBackend *v1beta.IngressBackend = new(v1beta.IngressBackend)
 	localBackend.ServiceName = "127.0.0.1"
 	localBackend.ServicePort = intstr.FromInt(globalCfg.Listener.HTTPPort)
@@ -389,7 +388,7 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 		fmt.Sprintf("\tAddress\t%s\n", globalCfg.Listener.ListenerIP) +
 		fmt.Sprintf("\tPort\t%d\n", globalCfg.Listener.HTTPSPort)
 
-	addProxyConfigListenerParamsSSL(buff, globalCfg, ingressList, &sslIndex, )
+	addProxyConfigListenerParamsSSL(buff, globalCfg, ingressList, &sslIndex)
 
 	// add ssl svc to HTTPS listener
 	for _, ind := range sslIndex {
@@ -405,7 +404,6 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 		fmt.Sprintf("\tPort\t%d\n", globalCfg.Listener.HTTPPort)
 
 	addProxyConfigListenerParamsPlain(buff, globalCfg)
-
 
 	for _, ingObj := range ingressList {
 
