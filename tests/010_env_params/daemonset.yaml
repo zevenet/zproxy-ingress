@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: zproxy-ingress
+  namespace: zproxy-ingress
+spec:
+  selector:
+      matchLabels:
+        ingress-controller: zproxy-ingress
+  template:
+    metadata:
+      labels:
+        ingress-controller: zproxy-ingress
+    spec:
+      dnsPolicy: ClusterFirst
+      serviceAccountName: zproxy-ingress-service-account
+      containers:
+      - name: zproxy-ingress
+        image: zproxy-ingress
+        imagePullPolicy: Never
+        command: [ "/bin/bash", "-c", "/start.sh" ]
+
+        # vars
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DaemonCheckTimeout
+          value: "30"
+        - name: ClientLogsLevel
+          value: "0"
+        - name: LogsLevel
+          value: "6"
+        - name: DHFile
+          value: "/dh2048.pem"
+        - name: ECDHCurve
+          value: "prime256v1"
+        - name: TotalTO
+          value: "41"
+        - name: ConnTO
+          value: "22"
+        - name: AliveTO
+          value: "11"
+        - name: ClientTO
+          value: "33"
+        - name: Ignore100Continue
+          value: "1"
+
+     # mount dhparam
+     #   volumeMounts:
+     #   - mountPath: /dhparam
+     #     name: dhfile
+
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
+
+    #  volumes:
+    #    - name: dhfile
+    #      hostPath:
+    #        path: /path/dhparam.pem

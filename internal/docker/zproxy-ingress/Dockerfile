@@ -4,6 +4,7 @@ FROM debian:stable
 # Default shell when executing RUN
 SHELL ["/bin/bash", "-c"]
 
+
 # Put Debian in not interactive mode
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
@@ -32,23 +33,8 @@ COPY ./dh2048.pem /dh2048.pem
 COPY ./start.sh /start.sh
 COPY ./ingress.tpl /ingress.cfg
 
-RUN source /env.conf && \
-	sed -Ei "s|#CONFIGFILE#|$ConfigFile|g" /start.sh && \
-	sed -Ei "s|#DAEMONCHECKTIMEOUT#|$DaemonCheckTimeout|g" /start.sh && \
-	sed -Ei "s|#BINPATH#|$BinPath|g" /start.sh && \
-	sed -Ei "s|#SOCKETFILE#|$SocketFile|g" /ingress.cfg && \
-	sed -Ei "s|#LISTENERIP#|$ListenerIP|g" /ingress.cfg && \
-	sed -Ei "s|#HTTPPORT#|$HTTPPort|g" /ingress.cfg && \
-	sed -Ei "s|#TOTALTO#|$TotalTO|g" /ingress.cfg && \
-	sed -Ei "s|#CONNTO#|$ConnTO|g" /ingress.cfg && \
-	sed -Ei "s|#ALIVETO#|$AliveTO|g" /ingress.cfg && \
-	sed -Ei "s|#CLIENTTO#|$ClientTO|g" /ingress.cfg && \
-	sed -Ei "s|#DHFILE#|$DHFile|g" /ingress.cfg && \
-	sed -Ei "s|#ECDHCURVE#|$ECDHCurve|g" /ingress.cfg && \
-	sed -Ei "s|#LOGSLEVEL#|$LogsLevel|g" /ingress.cfg
-
 
 # remove tmp files
-RUN rm /env.conf /tmp.conf
+RUN rm /tmp.conf
 
-CMD [ "/bin/bash", "-c", "/start.sh" ]
+#CMD [ "/bin/bash", "-c", "/start.sh" ]

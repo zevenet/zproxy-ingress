@@ -1,0 +1,33 @@
+- create a new dhparams and set it
+
+# create dhparams
+# openssl dhparam -5 -out /tmp/dh2048.pem 2048
+
+## mount!
+#      volumes:
+#        - name: dhfile
+#          hostPath:
+#            path: /tmp/dh2048.pem
+
+
+
+- Others configurations
+
+[Client]
+DaemonCheckTimeout=20
+ConfigurationReloadTime=20
+ClientLogsLevel=1
+
+[Global]
+ConfigFile="/ingress.cfg"
+SocketFile="/ingressctl.socket"
+BinPath="/usr/local/zevenet/app/zproxy/bin/zproxy"
+BinCtlPath="/usr/local/zevenet/app/zproxy/bin/zproxyctl"
+LogsLevel=5
+DHFile="/dh2048.pem"
+ECDHCurve="prime256v1"
+TotalTO=45
+ConnTO=20
+AliveTO=10
+ClientTO=30
+Ignore100Continue=0

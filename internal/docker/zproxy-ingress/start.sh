@@ -1,7 +1,42 @@
 #!/bin/bash
 
+### set only unset variables
+
+ENVFILE="/env.conf"
+function overwriteEnvVariables
+{
+	for V in `env`
+	do
+		# split key and value
+		out=( $(grep -Eo '[^=]+|[^=]+' <<<"$V") )
+		sed -Ei "s|${out[0]}=(\"?).*|${out[0]}=\1${out[1]}\1|" $ENVFILE
+	done
+
+	source $ENVFILE
+}
+
+
+function createCfgFile ()
+{
+	sed -Ei "s|#SOCKETFILE#|$SocketFile|g" /ingress.cfg && \
+	sed -Ei "s|#LISTENERIP#|$ListenerIP|g" /ingress.cfg && \
+	sed -Ei "s|#HTTPPORT#|$HTTPPort|g" /ingress.cfg && \
+	sed -Ei "s|#TOTALTO#|$TotalTO|g" /ingress.cfg && \
+	sed -Ei "s|#CONNTO#|$ConnTO|g" /ingress.cfg && \
+	sed -Ei "s|#ALIVETO#|$AliveTO|g" /ingress.cfg && \
+	sed -Ei "s|#CLIENTTO#|$ClientTO|g" /ingress.cfg && \
+	sed -Ei "s|#ECDHCURVE#|$ECDHCurve|g" /ingress.cfg && \
+	sed -Ei "s|#DHFILE#|$DHFile|g" /ingress.cfg && \
+	sed -Ei "s|#IGNORE100CONTINUE#|$Ignore100Continue|g" /ingress.cfg && \
+	sed -Ei "s|#LOGSLEVEL#|$LogsLevel|g" /ingress.cfg
+}
+
+# configure the app
+overwriteEnvVariables
+createCfgFile
+
 # Start the first process
-#BINPATH# -v -f #CONFIGFILE# &
+$BinPath -v -f $ConfigFile &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start zproxy: $status"
@@ -19,13 +54,8 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
-# Naive check runs checks once a minute to see if either of the processes exited.
-# This illustrates part of the heavy lifting you need to do if you want to run
-# more than one service in a container. The container exits with an error
-# if it detects that either of the processes has exited.
-# Otherwise it loops forever, waking up every 60 seconds
 
-while sleep #DAEMONCHECKTIMEOUT#; do
+while sleep $DaemonCheckTimeout; do
   ps aux |grep zproxy |grep -q -v grep
   PROCESS_ZPROXY_STATUS=$?
   if [ $PROCESS_ZPROXY_STATUS -ne 0 ]; then

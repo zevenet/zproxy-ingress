@@ -10,6 +10,7 @@ Client          #CLIENTTO#
 Control         "#SOCKETFILE#"
 DHParams		"#DHFILE#"
 ECDHCurve		"#ECDHCURVE#"
+Ignore100Continue #IGNORE100CONTINUE#
 
 
 ListenHTTP

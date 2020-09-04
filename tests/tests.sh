@@ -33,7 +33,7 @@ function printHelp ()
 {
   echo "Usage: \"$0 [Options...]\""
   echo "Options:"
-  echo -e "-h, --helo\tIt displays the program help."
+  echo -e "-h, --help\tIt displays the program help."
   echo -e "-w, --write\tIt writes the output of the tests to be used in future checks."
   echo -e "-t, --test [test_dir]\tIt executes only a test."
   echo -e "-d, --debug\tIt stops the test process until the user wants to continue."
@@ -46,12 +46,13 @@ function printHelp ()
 
 function stop
 {
-	read "Press the key ENTER to continue"
+	echo "Press the key ENTER to continue"
+	read
 }
 
 function getProxyPodName
 {
-	PROXY_PODNAME=`kubectl get pods -n $PROXY_NAMESPACE | grep $PROXY_NAME | cut -d " " -f1`
+	PROXY_PODNAME=`kubectl get pods -n $PROXY_NAMESPACE | grep -i running | grep $PROXY_NAME | cut -d " " -f1`
 
 	if [[ -z $PROXY_PODNAME ]]; then die "Zproxy pod name was not found"; fi
 }
@@ -120,7 +121,8 @@ function execTest
 	cd $TEST
 
 	# execute some scripts before than k8s cfg
-	if [[ -e pre_*.sh ]]; then
+	ls pre_*.sh >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then
 		sh pre_*.sh
 		if [[ $? -ne 0 ]]; then die "Error executing pre scripts"; fi
 	fi
@@ -130,12 +132,19 @@ function execTest
 	if [[ $? -ne 0 ]]; then die "Error applying yalm files"; fi
 
 	# execute some script before checking the output
-	if [[ -e post_*.sh ]]; then
+	ls post_*.sh >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then
 		sh post_*.sh
 		if [[ $? -ne 0 ]]; then die "Error executing post scripts"; fi
 	fi
 
 	waitGraceTime
+
+
+	# refresh pod name. for test 010
+	if [[ $TEST_NAME =~ "010_env_params" ]]; then
+		getProxyPodName
+	fi
 
 	if [[ $WRITE_FLAG -eq 1 ]]; then
 		getProxyCfg $OUTPUT_FILE
@@ -162,15 +171,17 @@ function execTest
 		if [[ $TEST_ERR -eq 0 ]]; then echo "Test '$TEST' - success"; fi
 	fi
 
-	# clean env
-	if [[ -e clean_*.sh ]]; then
-		sh clean_*.sh
-		if [[ $? -ne 0 ]]; then echo "Error executing cleanning scripts"; fi
-	fi
-
 	# remove yaml configurations
 	kubectl delete -f ./
 	if [[ $? -ne 0 ]]; then echo "Error deleting yaml configurations"; fi
+
+
+	# clean env
+	ls clean_*.sh >/dev/null 2>&1
+	if [[ $? -eq 0 ]]; then
+		sh clean_*.sh
+		if [[ $? -ne 0 ]]; then echo "Error executing cleanning scripts"; fi
+	fi
 
 	cd ..
 }

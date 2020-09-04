@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-configuration
+  namespace: zproxy-ingress
+data:
+  Listener: |
+    ListenerIP="0.0.0.0"
+    HTTPPort=80
+    HTTPSPort=443
+    Err414=""
+    Err500=""
+    Err501=""
+    Err503=""
+    DefaultCert="/certs/zencert.pem"
+    XHTTP=4
+    RewriteLocation=1
+    Ciphers="ALL"
+    DisableSSLProtocol="SSLv3"
+    SSLHonorCipherOrder=1
+
+  Service: |
+    HTTPSBackends="false"
+    Priority="false"
+    StrictTransportSecurity=21600000
+    CookieName=""
+    CookiePath="/"
+    CookieDomain=""
+    CookieTTL="3600"
+    RedirectURL=""
+    RedirectCode=302
+    RedirectType="default"
+    SessionType=""
+    SessionTTL=120
+    SessionID=""
