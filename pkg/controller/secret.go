@@ -1,4 +1,4 @@
-package funcs
+package controller
 
 import (
 	"fmt"
@@ -6,14 +6,41 @@ import (
 
 	config "github.com/zevenet/zproxy-ingress/pkg/config"
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
-	types "github.com/zevenet/zproxy-ingress/pkg/types"
+	watcher "github.com/zevenet/zproxy-ingress/pkg/watcher"
+	zproxy "github.com/zevenet/zproxy-ingress/pkg/zproxy"
 	v1 "k8s.io/api/core/v1"
+	kubernetes "k8s.io/client-go/kubernetes"
+	cache "k8s.io/client-go/tools/cache"
 )
+
+// GetServiceController returns a Controller based on listWatch.
+// Exports every message into logChannel.
+func GetSecretController(clientset *kubernetes.Clientset) cache.Controller {
+
+	listWatch := watcher.GetSecretListWatch(clientset)
+
+	eventHandler := cache.ResourceEventHandlerFuncs{
+		AddFunc:    createCertificate,
+		DeleteFunc: deleteCertificate,
+		UpdateFunc: updateCertificate,
+	}
+
+	_, controller := cache.NewInformer(
+		listWatch,
+		&v1.Secret{},
+		0,
+		eventHandler,
+	)
+
+	return controller
+}
 
 // overwrite the certificate file
 // if the certificate is not valid, does not overwrite the old one
 
-func CreateCertificateFile(cert *v1.Secret) bool {
+func createCertificateFile(obj interface{}) bool {
+
+	cert := obj.(*v1.Secret)
 
 	msg := fmt.Sprintf("Checking certificate \"%s\" from the \"%s\" namespace \n", cert.ObjectMeta.Name, cert.ObjectMeta.Namespace)
 	log.Print(2, msg)
@@ -67,31 +94,30 @@ func CreateCertificateFile(cert *v1.Secret) bool {
 	return true
 }
 
-// overwrite the certificate file and reload the daemon
-func UpdateCertificate(cert *v1.Secret, globalCfg *types.Config) bool {
+func createCertificate(obj interface{}) {
 
-	certFile := CreateCertificateFile(cert)
+	cert := obj.(*v1.Secret)
 
-	if !certFile {
-		return false
-	}
-
-	if config.ReloadDaemon(globalCfg) != 0 {
-		return false
-	}
-
-	return true
+	createCertificateFile(cert)
 }
 
-func DeleteCertificate(cert *v1.Secret, globalCfg *types.Config) bool {
+// overwrite the certificate file and reload the daemon
+func updateCertificate(_, obj interface{}) {
 
-	if !config.DeleteCertificateFile(cert.ObjectMeta.Name, cert.ObjectMeta.Namespace) {
-		return false
+	cert := obj.(*v1.Secret)
+
+	certFile := createCertificateFile(cert)
+
+	if certFile {
+		zproxy.ReloadDaemon()
 	}
+}
 
-	if config.ReloadDaemon(globalCfg) != 0 {
-		return false
+func deleteCertificate(obj interface{}) {
+
+	cert := obj.(*v1.Secret)
+
+	if config.DeleteCertificateFile(cert.ObjectMeta.Name, cert.ObjectMeta.Namespace) {
+		zproxy.ReloadDaemon()
 	}
-
-	return true
 }

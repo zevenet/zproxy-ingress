@@ -1,4 +1,4 @@
-package config
+package zproxy
 
 import (
 	"bufio"
@@ -7,16 +7,23 @@ import (
 	"os/exec"
 	"strconv"
 
+	config "github.com/zevenet/zproxy-ingress/pkg/config"
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
 	types "github.com/zevenet/zproxy-ingress/pkg/types"
 	v1beta "k8s.io/api/networking/v1beta1"
-
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type service struct {
 	backendList []v1beta.IngressBackend
 	path        string
+}
+
+// configuration to set up zproxy
+var globalCfg *types.Config
+
+func LoadConfig() {
+	globalCfg = config.Settings
 }
 
 func printConfigError(cfgFile string, errString string) {
@@ -44,7 +51,7 @@ func printConfigError(cfgFile string, errString string) {
 	f.Close()
 }
 
-func checkProxyConfig(globalCfg *types.Config) int {
+func checkProxyConfig() int {
 
 	cmdLine := globalCfg.Global.BinPath + " -f " + globalCfg.Global.ConfigFile + " -c"
 
@@ -62,9 +69,9 @@ func checkProxyConfig(globalCfg *types.Config) int {
 	return 0
 }
 
-func ReloadDaemon(globalCfg *types.Config) int {
+func ReloadDaemon() int {
 
-	if checkProxyConfig(globalCfg) != 0 {
+	if checkProxyConfig() != 0 {
 		return 1
 	}
 
@@ -88,15 +95,15 @@ func printUpdated(object string, json string, response string) {
 	log.Print(0, message)
 }
 
-func CreateProxyConfig(ingressesList []*v1beta.Ingress, globalCfg *types.Config) int {
+func CreateProxyConfig(ingressesList []*v1beta.Ingress) int {
 
 	var buffFile string //cfg buffer
 
 	// global cfg
-	addProxyConfigGlobal(&buffFile, globalCfg)
+	addProxyConfigGlobal(&buffFile)
 
 	// listeners
-	addProxyConfigListener(&buffFile, ingressesList, globalCfg)
+	addProxyConfigListener(&buffFile, ingressesList)
 
 	// save file
 	if writeProxyConfig(&buffFile, globalCfg.Global.ConfigFile) != 0 {
@@ -106,7 +113,7 @@ func CreateProxyConfig(ingressesList []*v1beta.Ingress, globalCfg *types.Config)
 	return 0
 }
 
-func addProxyConfigGlobal(buff *string, globalCfg *types.Config) {
+func addProxyConfigGlobal(buff *string) {
 
 	*buff += fmt.Sprintf("Daemon\t%d\n", 0) +
 		fmt.Sprintf("LogLevel\t%d\n", globalCfg.Global.LogsLevel) +
@@ -136,7 +143,7 @@ func getSslServicesIndex(ingressesList []*v1beta.Ingress, ssl *[]int, nossl *[]i
 	}
 }
 
-func addServiceRedirect(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress, redirectFlag *int) {
+func addServiceRedirect(buff *string, ingress *v1beta.Ingress, redirectFlag *int) {
 	redURL := globalCfg.Service.RedirectURL
 	redCode := globalCfg.Service.RedirectCode
 	redType := globalCfg.Service.RedirectType
@@ -163,7 +170,7 @@ func addServiceRedirect(buff *string, globalCfg *types.Config, ingress *v1beta.I
 	}
 }
 
-func addServiceSession(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress) {
+func addServiceSession(buff *string, ingress *v1beta.Ingress) {
 	sessionType := globalCfg.Service.SessionType
 	sessionTTL := globalCfg.Service.SessionTTL
 	sessionID := globalCfg.Service.SessionID
@@ -195,7 +202,7 @@ func addServiceSession(buff *string, globalCfg *types.Config, ingress *v1beta.In
 	}
 }
 
-func addServiceCookie(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress) {
+func addServiceCookie(buff *string, ingress *v1beta.Ingress) {
 
 	cookieName := globalCfg.Service.CookieName
 	cookieTTL := globalCfg.Service.CookieTTL
@@ -221,7 +228,7 @@ func addServiceCookie(buff *string, globalCfg *types.Config, ingress *v1beta.Ing
 	}
 }
 
-func addServiceTransportSecurity(buff *string, globalCfg *types.Config, ingress *v1beta.Ingress) {
+func addServiceTransportSecurity(buff *string, ingress *v1beta.Ingress) {
 
 	strictTransport := globalCfg.Service.StrictTransportSecurity
 
@@ -240,7 +247,7 @@ func addServiceTransportSecurity(buff *string, globalCfg *types.Config, ingress 
 }
 
 //
-func getServiceBackendHTTPS(globalCfg *types.Config, ingress *v1beta.Ingress) string {
+func getServiceBackendHTTPS(ingress *v1beta.Ingress) string {
 
 	flag := globalCfg.Service.HTTPSBackends
 
@@ -261,7 +268,7 @@ func getServiceBackendHTTPS(globalCfg *types.Config, ingress *v1beta.Ingress) st
 // 	* the service to forward HTTPS request to HTTP service (in HTTPS listener)
 // 	* the service with the default backend (in HTTP listener)
 // The function sets the svc name as svc-default when the svcId parameter is set to 0
-func genProxyConfigService(buff *string, svcId int, host string, path string, globalCfg *types.Config, ingressObj *v1beta.Ingress, backendList *[]v1beta.IngressBackend, namespace string, ssl bool) {
+func genProxyConfigService(buff *string, svcId int, host string, path string, ingressObj *v1beta.Ingress, backendList *[]v1beta.IngressBackend, namespace string, ssl bool) {
 
 	redirectFlag := 0
 	backendHttps := ""
@@ -281,18 +288,18 @@ func genProxyConfigService(buff *string, svcId int, host string, path string, gl
 	}
 
 	// customized params
-	if globalCfg != nil {
+	if globalCfg != nil && ingressObj != nil {
 
-		addServiceRedirect(buff, globalCfg, ingressObj, &redirectFlag)
+		addServiceRedirect(buff, ingressObj, &redirectFlag)
 
-		addServiceSession(buff, globalCfg, ingressObj)
+		addServiceSession(buff, ingressObj)
 
-		addServiceCookie(buff, globalCfg, ingressObj)
+		addServiceCookie(buff, ingressObj)
 
-		addServiceTransportSecurity(buff, globalCfg, ingressObj)
+		addServiceTransportSecurity(buff, ingressObj)
 
 		// backends
-		backendHttps = getServiceBackendHTTPS(globalCfg, ingressObj)
+		backendHttps = getServiceBackendHTTPS(ingressObj)
 	}
 
 	if len(*backendList) > 0 && redirectFlag == 0 {
@@ -312,7 +319,7 @@ func genProxyConfigService(buff *string, svcId int, host string, path string, gl
 }
 
 // Set up the parameters for HTTP(S) traffic
-func addProxyConfigListenerParamsPlain(buff *string, globalCfg *types.Config) {
+func addProxyConfigListenerParamsPlain(buff *string) {
 
 	if globalCfg.Listener.Err414 != "" {
 		*buff += fmt.Sprintf("\tErr414\t\"%s\"\n", globalCfg.Listener.Err414)
@@ -345,10 +352,10 @@ func addProxyConfigListenerParamsPlain(buff *string, globalCfg *types.Config) {
 
 // Set up the parameters for SSL listeners
 // this function fills the sslIndex slice
-func addProxyConfigListenerParamsSSL(buff *string, globalCfg *types.Config, ingressList []*v1beta.Ingress, sslIndex *[]int) {
+func addProxyConfigListenerParamsSSL(buff *string, ingressList []*v1beta.Ingress, sslIndex *[]int) {
 	certList := make(map[string]int)
 
-	addProxyConfigListenerParamsPlain(buff, globalCfg)
+	addProxyConfigListenerParamsPlain(buff)
 
 	for ind, ing := range ingressList {
 		if ing.Spec.TLS != nil {
@@ -368,17 +375,17 @@ func addProxyConfigListenerParamsSSL(buff *string, globalCfg *types.Config, ingr
 }
 
 // This backend is to forward the request to HTTP listener, for HTTPS request that are defined without TLS configuration
-func addRedirectToHTTPService(buff *string, globalCfg *types.Config) {
+func addRedirectToHTTPService(buff *string) {
 	var localBackend *v1beta.IngressBackend = new(v1beta.IngressBackend)
 	localBackend.ServiceName = "127.0.0.1"
 	localBackend.ServicePort = intstr.FromInt(globalCfg.Listener.HTTPPort)
 	bckList := []v1beta.IngressBackend{*localBackend}
 
-	genProxyConfigService(buff, 0, "", "", nil, nil, &bckList, "", false)
+	genProxyConfigService(buff, 0, "", "", nil, &bckList, "", false)
 }
 
 // Add two listener, one HTTP and another HTTPS, the configuration depend on the tls configuration
-func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalCfg *types.Config) {
+func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress) {
 
 	var sslIndex []int
 	svcId := 1
@@ -388,28 +395,27 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 		fmt.Sprintf("\tAddress\t%s\n", globalCfg.Listener.ListenerIP) +
 		fmt.Sprintf("\tPort\t%d\n", globalCfg.Listener.HTTPSPort)
 
-	addProxyConfigListenerParamsSSL(buff, globalCfg, ingressList, &sslIndex)
+	addProxyConfigListenerParamsSSL(buff, ingressList, &sslIndex)
 
 	// add ssl svc to HTTPS listener
 	for _, ind := range sslIndex {
-		addProxyConfigServices(buff, globalCfg, ingressList[ind], true, &svcId)
+		addProxyConfigServices(buff, ingressList[ind], true, &svcId)
 	}
 
 	// create default bck with local HTTP svc
-	addRedirectToHTTPService(buff, globalCfg)
+	addRedirectToHTTPService(buff)
 
 	// http listener
 	*buff += "End\n\nListenHTTP\n" +
 		fmt.Sprintf("\tAddress\t%s\n", globalCfg.Listener.ListenerIP) +
 		fmt.Sprintf("\tPort\t%d\n", globalCfg.Listener.HTTPPort)
 
-	addProxyConfigListenerParamsPlain(buff, globalCfg)
+	addProxyConfigListenerParamsPlain(buff)
 
 	for _, ingObj := range ingressList {
-
 		// add service to listener HTTP without
 		if ingObj.Spec.TLS == nil {
-			addProxyConfigServices(buff, globalCfg, ingObj, false, &svcId)
+			addProxyConfigServices(buff, ingObj, false, &svcId)
 			// TODO: implement redirect to https svc for HTTP requests if ingress has TLS cfg.
 			// Now, the respose is not service available.
 			//~ else if ingObj.Annotation.redirectToSSL != nil {
@@ -421,7 +427,7 @@ func addProxyConfigListener(buff *string, ingressList []*v1beta.Ingress, globalC
 	for _, ingressObj := range ingressList {
 		if ingressObj.Spec.Backend != nil {
 			bckList := []v1beta.IngressBackend{*ingressObj.Spec.Backend}
-			genProxyConfigService(buff, 0, "", "", globalCfg, ingressObj, &bckList, ingressObj.ObjectMeta.Namespace, false)
+			genProxyConfigService(buff, 0, "", "", ingressObj, &bckList, ingressObj.ObjectMeta.Namespace, false)
 			break
 		}
 	}
@@ -477,7 +483,7 @@ func addBackendToService(svcList *[]service, path string, backendOri *v1beta.Ing
 
 }
 
-func addProxyConfigServices(buff *string, globalCfg *types.Config, ingressObj *v1beta.Ingress, ssl bool, svcId *int) int {
+func addProxyConfigServices(buff *string, ingressObj *v1beta.Ingress, ssl bool, svcId *int) int {
 
 	var svcList []service
 	var host string
@@ -500,7 +506,7 @@ func addProxyConfigServices(buff *string, globalCfg *types.Config, ingressObj *v
 
 			// print
 			for _, svc := range svcList {
-				genProxyConfigService(buff, *svcId, host, svc.path, globalCfg, ingressObj, &svc.backendList, ingressObj.ObjectMeta.Namespace, ssl)
+				genProxyConfigService(buff, *svcId, host, svc.path, ingressObj, &svc.backendList, ingressObj.ObjectMeta.Namespace, ssl)
 				*svcId += 1
 			}
 		}
@@ -543,7 +549,7 @@ func addProxyCerts(buff *string, tlsList *[]v1beta.IngressTLS, namespace string,
 		// {"hosts":["sslexample.foo.com","sslexample2.foo.com"],"secretName":"testsecret-tls"},
 		// The "hosts" field is not managed
 
-		fileName = GetCertificateFileName(tlsInfo.SecretName, namespace)
+		fileName = config.GetCertificateFileName(tlsInfo.SecretName, namespace)
 		if certList[fileName] != 1 {
 			// Add to the list of uploaded certificates
 			certList[fileName] = 1

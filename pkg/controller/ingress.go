@@ -1,19 +1,43 @@
-package funcs
+package controller
 
 import (
 	"fmt"
 	"github.com/juju/fslock"
 	"time"
 
-	config "github.com/zevenet/zproxy-ingress/pkg/config"
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
-	types "github.com/zevenet/zproxy-ingress/pkg/types"
+	watcher "github.com/zevenet/zproxy-ingress/pkg/watcher"
+	zproxy "github.com/zevenet/zproxy-ingress/pkg/zproxy"
 	v1beta "k8s.io/api/networking/v1beta1"
+	kubernetes "k8s.io/client-go/kubernetes"
+	cache "k8s.io/client-go/tools/cache"
 )
 
+// Global variables
 var lf = "/tmp/proxy_cfg.lock" // lock file
-
 var ingressesList []*v1beta.Ingress
+
+// GetServiceController returns a Controller based on listWatch.
+// Exports every message into logChannel.
+func GetIngressController(clientset *kubernetes.Clientset) cache.Controller {
+
+	listWatch := watcher.GetIngressListWatch(clientset)
+
+	eventHandler := cache.ResourceEventHandlerFuncs{
+		AddFunc:    addIngress,
+		DeleteFunc: deleteIngress,
+		UpdateFunc: updateIngress,
+	}
+
+	_, controller := cache.NewInformer(
+		listWatch,
+		&v1beta.Ingress{},
+		0,
+		eventHandler,
+	)
+
+	return controller
+}
 
 func validateIngress(ingressObj *v1beta.Ingress) bool {
 
@@ -43,16 +67,16 @@ func getIngressIndex(oldIngressObj *v1beta.Ingress) int {
 	return -1
 }
 
-func updateIngressCfg(ingressObjList []*v1beta.Ingress, globalCfg *types.Config) bool {
+func updateIngressCfg(ingressObjList []*v1beta.Ingress) bool {
 
 	start := time.Now()
 
-	if config.CreateProxyConfig(ingressObjList, globalCfg) != 0 {
+	if zproxy.CreateProxyConfig(ingressObjList) != 0 {
 		log.Print(0, "Error creating the config file")
 		return false
 	}
 
-	if config.ReloadDaemon(globalCfg) != 0 {
+	if zproxy.ReloadDaemon() != 0 {
 		log.Print(0, "Error reloading zproxy daemon")
 		return false
 	}
@@ -68,7 +92,14 @@ func updateIngressCfg(ingressObjList []*v1beta.Ingress, globalCfg *types.Config)
 	return true
 }
 
-func AddIngress(ingressObj *v1beta.Ingress, globalCfg *types.Config) {
+func addIngress(obj interface{}) {
+
+	ingressObj := obj.(*v1beta.Ingress)
+
+	if ingressObj == nil {
+		return
+	}
+
 	if !validateIngress(ingressObj) {
 		return
 	}
@@ -77,14 +108,17 @@ func AddIngress(ingressObj *v1beta.Ingress, globalCfg *types.Config) {
 
 	ingressesList = append(ingressesList, ingressObj)
 
-	if !updateIngressCfg(ingressesList, globalCfg) {
+	if !updateIngressCfg(ingressesList) {
 		ingressesList = ingressesList[:len(ingressesList)-1]
 	}
 
 	lock.Unlock()
 }
 
-func DeleteIngress(ingressObj *v1beta.Ingress, globalCfg *types.Config) {
+func deleteIngress(obj interface{}) {
+
+	ingressObj := obj.(*v1beta.Ingress)
+
 	if !validateIngress(ingressObj) {
 		return
 	}
@@ -98,12 +132,16 @@ func DeleteIngress(ingressObj *v1beta.Ingress, globalCfg *types.Config) {
 	}
 	ingressesList = append(ingressesList[:index], ingressesList[index+1:]...) // remove element
 
-	updateIngressCfg(ingressesList, globalCfg)
+	updateIngressCfg(ingressesList)
 
 	lock.Unlock()
 }
 
-func UpdateIngress(oldIngressObj *v1beta.Ingress, ingressObj *v1beta.Ingress, globalCfg *types.Config) {
+func updateIngress(obj interface{}, newobj interface{}) {
+
+	oldIngressObj := obj.(*v1beta.Ingress)
+	ingressObj := newobj.(*v1beta.Ingress)
+
 	if !validateIngress(ingressObj) {
 		return
 	}
@@ -120,7 +158,7 @@ func UpdateIngress(oldIngressObj *v1beta.Ingress, ingressObj *v1beta.Ingress, gl
 	}
 	ingressesList[index] = ingressObj
 
-	if !updateIngressCfg(ingressesList, globalCfg) {
+	if !updateIngressCfg(ingressesList) {
 		ingressesList = oldList
 	}
 

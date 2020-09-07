@@ -9,24 +9,26 @@ import (
 	types "github.com/zevenet/zproxy-ingress/pkg/types"
 )
 
+var Settings *types.Config // struct with current global cfg
+
 // Set the global configuration from a config file received for arguments
-func Init() *types.Config {
+func Init() {
 	if len(os.Args) != 2 {
 		err := fmt.Sprintf("Error: only the configuration file is expected as argument")
 		panic(err)
 	}
 
-	var cfg types.Config
-	err := gcfg.ReadFileInto(&cfg, os.Args[1])
+	var Default types.Config // default cfg loaded when the client is executed
+	err := gcfg.ReadFileInto(&Default, os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	if cfg.Client.ClientLogsLevel > 0 {
-		log.SetLevel(cfg.Client.ClientLogsLevel)
-		msg := fmt.Sprintf("%+v\n", cfg)
+	if Default.Client.ClientLogsLevel > 0 {
+		log.SetLevel(Default.Client.ClientLogsLevel)
+		msg := fmt.Sprintf("%+v\n", Default)
 		log.Print(1, msg)
 	}
 
-	return &cfg
+	Settings = &Default
 }

@@ -1,7 +1,6 @@
-package watchers
+package watcher
 
 import (
-	types "github.com/zevenet/zproxy-ingress/pkg/types"
 	v1 "k8s.io/api/core/v1"
 	fields "k8s.io/apimachinery/pkg/fields"
 	kubernetes "k8s.io/client-go/kubernetes"
@@ -24,10 +23,4 @@ func GetSecretListWatch(clientset *kubernetes.Clientset) *cache.ListWatch {
 	)
 
 	return listwatch
-}
-
-// GetServiceController returns a Controller based on listWatch.
-// Exports every message into logChannel.
-func GetSecretController(listWatch *cache.ListWatch, logChannel chan string, globalConfig *types.Config) cache.Controller {
-	return getController(listWatch, &resourceStruct, resourceName, logChannel, globalConfig)
 }

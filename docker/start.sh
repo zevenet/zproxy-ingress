@@ -35,6 +35,7 @@ function createCfgFile ()
 overwriteEnvVariables
 createCfgFile
 
+
 # Start the first process
 $BinPath -v -f $ConfigFile &
 status=$?

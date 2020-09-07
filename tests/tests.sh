@@ -78,8 +78,12 @@ function checkLogs
 
 function waitGraceTime
 {
-	echo "Waiting $TEST_GRACE_TIME"
-	sleep $TEST_GRACE_TIME
+	TIME=$1
+	if [[ -z $TIME ]]; then
+		TIME=$TEST_GRACE_TIME
+	fi
+	echo "Waiting $TIME"
+	sleep $TIME
 }
 
 function setEnv
@@ -143,8 +147,9 @@ function execTest
 
 	# refresh pod name. for test 010
 	if [[ $TEST_NAME =~ "010_env_params" ]]; then
-		getProxyPodName
+		waitGraceTime 10
 	fi
+		getProxyPodName
 
 	if [[ $WRITE_FLAG -eq 1 ]]; then
 		getProxyCfg $OUTPUT_FILE
@@ -228,8 +233,6 @@ if [[ $ENV_FLAG -eq 1 ]]; then
 	setEnv
 fi
 
-# load controller pod name
-getProxyPodName
 
 
 if [[ $TEST_NAME != "" ]]; then
