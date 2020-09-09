@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-configuration
+  namespace: zproxy-ingress
+data:
+  Listener.HTTPPort: "8080"
+  Listener.HTTPSPort: "80443"
+  Listener.Err414: |
+    The page was not found
+    error 404
+  Listener.Err500: |
+    Internal Server Error
+    error 500
+  Listener.Err501: |
+    Not implemented
+    error 501
+  Listener.Err503: |
+    Service unavailable
+    error 503
+  Listener.XHTTP: "5"
+  Listener.RewriteLocation: "0"
+  Listener.RemoveRequestHeader: |
+    ^host
+    x-forward-to
+  Listener.RemoveResponseHeader: |
+    ^host
+    x-forward-to
+  Listener.AddRequestHeader: |
+    X-Forwarded-Port: 80
+    X-Forwarded-Proto: HTTP
+  Listener.AddResponseHeader: |
+    X-Forwarded-Port: 443
+    X-Forwarded-Proto: HTTPS
+
+  # created in test 000
+  Listener.DefaultCert: "default-cert"
+  Listener.Ciphers: "AES"
+  Listener.DisableSSLProtocol: "SSLv2|TLSv1_1"
+  Listener.SSLHonorCipherOrder: "0"
+
+  Service.HTTPSBackends: "true"
+  Service.StrictTransportSecurity: "100000"
+  Service.Priority: "true"
+  Service.CookieName: "persistcookie"
+  Service.CookiePath: "/index.html"
+  Service.CookieDomain: "cookie.zevenet.com"
+  Service.CookieTTL: "110"
+  Service.RedirectCode: "301"
+  Service.RedirectType: "append"
+  Service.SessionType: "COOKIE"
+  Service.SessionTTL: "3600"
+  Service.SessionID: "cookieIDToken"

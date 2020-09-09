@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	config "github.com/zevenet/zproxy-ingress/pkg/config"
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
@@ -13,6 +14,9 @@ import (
 	v1beta "k8s.io/api/networking/v1beta1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
+
+// Global variables
+var IngressesList []*v1beta.Ingress
 
 type service struct {
 	backendList []v1beta.IngressBackend
@@ -41,7 +45,7 @@ func printConfigError(cfgFile string, errString string) {
 	log.Print(0, errString)
 
 	msg := ""
-	ind := 0
+	ind := 1
 	for scanner.Scan() {
 		msg = fmt.Sprintf("> %d:  %s", ind, scanner.Text())
 		log.Print(0, msg)
@@ -62,8 +66,11 @@ func checkProxyConfig() int {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
+		log.Print(0, "Latest reload was: error")
 		printConfigError(globalCfg.Global.ConfigFile, string(out))
 		return 1
+	} else {
+		log.Print(0, "Latest reload was: success")
 	}
 
 	return 0
@@ -337,16 +344,16 @@ func addProxyConfigListenerParamsPlain(buff *string) {
 		fmt.Sprintf("\tRewriteLocation\t%d\n", globalCfg.Listener.RewriteLocation)
 
 	for _, directive := range globalCfg.Listener.RemoveRequestHeader {
-		*buff += fmt.Sprintf("\tHeadRemove\t%s\n", directive)
+		*buff += fmt.Sprintf("\tHeadRemove\t\"%s\"\n", directive)
 	}
-	for _, directive := range globalCfg.Listener.RemoveRequestHeader {
-		*buff += fmt.Sprintf("\tAddHeader\t%s\n", directive)
+	for _, directive := range globalCfg.Listener.AddRequestHeader {
+		*buff += fmt.Sprintf("\tAddHeader\t\"%s\"\n", directive)
 	}
-	for _, directive := range globalCfg.Listener.RemoveRequestHeader {
-		*buff += fmt.Sprintf("\tRemoveResponseHead\t%s\n", directive)
+	for _, directive := range globalCfg.Listener.RemoveResponseHeader {
+		*buff += fmt.Sprintf("\tRemoveResponseHeader\t\"%s\"\n", directive)
 	}
-	for _, directive := range globalCfg.Listener.RemoveRequestHeader {
-		*buff += fmt.Sprintf("\tAddResponseHeader\t%s\n", directive)
+	for _, directive := range globalCfg.Listener.AddResponseHeader {
+		*buff += fmt.Sprintf("\tAddResponseHeader\t\"%s\"\n", directive)
 	}
 }
 
@@ -567,4 +574,31 @@ func addProxyCerts(buff *string, tlsList *[]v1beta.IngressTLS, namespace string,
 			}
 		}
 	}
+}
+
+func UpdateIngressCfg() bool {
+
+	start := time.Now()
+
+	LoadConfig()
+
+	if CreateProxyConfig(IngressesList) != 0 {
+		log.Print(0, "Error creating the config file")
+		return false
+	}
+
+	if ReloadDaemon() != 0 {
+		log.Print(0, "Error reloading zproxy daemon")
+		return false
+	}
+
+	if log.GetLevel() > 0 {
+		elapsed := time.Since(start)
+		msg := fmt.Sprintf("The reloading took \"%s\"", elapsed)
+		log.Print(1, msg)
+	}
+
+	log.Print(1, "Ingress configuration was reloaded properly")
+
+	return true
 }

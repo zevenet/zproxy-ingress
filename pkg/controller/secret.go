@@ -88,7 +88,7 @@ func createCertificateFile(obj interface{}) bool {
 		return false
 	}
 
-	msg = fmt.Sprintf("The \"%s\" certificate was created properly\n", fileName)
+	msg = fmt.Sprintf("The \"%s\" certificate was created properly", fileName)
 	log.Print(0, msg)
 
 	return true

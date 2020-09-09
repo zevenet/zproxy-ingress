@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	resourceName   = "secrets"
-	resourceStruct = v1.Secret{}
+	resourceNameSecret = "secrets"
 )
 
 // GetServiceListWatch makes a ListWatch of every Service in the cluster.
@@ -17,7 +16,7 @@ func GetSecretListWatch(clientset *kubernetes.Clientset) *cache.ListWatch {
 
 	listwatch := cache.NewListWatchFromClient(
 		clientset.CoreV1().RESTClient(), // REST interface
-		resourceName,                    // Resource to watch for
+		resourceNameSecret,              // Resource to watch for
 		v1.NamespaceAll,                 // Resource can be found in ALL namespaces
 		fields.Everything(),             // Get objects controlled by zproxy-ingress controller
 	)

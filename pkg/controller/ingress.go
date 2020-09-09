@@ -2,8 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"github.com/juju/fslock"
-	"time"
 
 	log "github.com/zevenet/zproxy-ingress/pkg/logs"
 	watcher "github.com/zevenet/zproxy-ingress/pkg/watcher"
@@ -12,10 +10,6 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	cache "k8s.io/client-go/tools/cache"
 )
-
-// Global variables
-var lf = "/tmp/proxy_cfg.lock" // lock file
-var ingressesList []*v1beta.Ingress
 
 // GetServiceController returns a Controller based on listWatch.
 // Exports every message into logChannel.
@@ -57,39 +51,14 @@ func validateIngress(ingressObj *v1beta.Ingress) bool {
 
 func getIngressIndex(oldIngressObj *v1beta.Ingress) int {
 
-	for i := range ingressesList {
-		if ingressesList[i].ObjectMeta.Name == oldIngressObj.ObjectMeta.Name &&
-			ingressesList[i].ObjectMeta.Namespace == oldIngressObj.ObjectMeta.Namespace {
+	for i := range zproxy.IngressesList {
+		if zproxy.IngressesList[i].ObjectMeta.Name == oldIngressObj.ObjectMeta.Name &&
+			zproxy.IngressesList[i].ObjectMeta.Namespace == oldIngressObj.ObjectMeta.Namespace {
 			return i
 		}
 	}
 
 	return -1
-}
-
-func updateIngressCfg(ingressObjList []*v1beta.Ingress) bool {
-
-	start := time.Now()
-
-	if zproxy.CreateProxyConfig(ingressObjList) != 0 {
-		log.Print(0, "Error creating the config file")
-		return false
-	}
-
-	if zproxy.ReloadDaemon() != 0 {
-		log.Print(0, "Error reloading zproxy daemon")
-		return false
-	}
-
-	if log.GetLevel() > 0 {
-		elapsed := time.Since(start)
-		msg := fmt.Sprintf("The reloading took \"%s\"", elapsed)
-		log.Print(1, msg)
-	}
-
-	log.Print(1, "Ingress configuration was reloaded properly")
-
-	return true
 }
 
 func addIngress(obj interface{}) {
@@ -104,15 +73,18 @@ func addIngress(obj interface{}) {
 		return
 	}
 
-	lock := fslock.New(lf)
+	msg := fmt.Sprintf("addIngress: %+v", obj)
+	log.Print(2, msg)
 
-	ingressesList = append(ingressesList, ingressObj)
+	lock := zproxy.Lock()
 
-	if !updateIngressCfg(ingressesList) {
-		ingressesList = ingressesList[:len(ingressesList)-1]
+	zproxy.IngressesList = append(zproxy.IngressesList, ingressObj)
+
+	if !zproxy.UpdateIngressCfg() {
+		zproxy.IngressesList = zproxy.IngressesList[:len(zproxy.IngressesList)-1]
 	}
 
-	lock.Unlock()
+	zproxy.Unlock(lock)
 }
 
 func deleteIngress(obj interface{}) {
@@ -123,18 +95,21 @@ func deleteIngress(obj interface{}) {
 		return
 	}
 
-	lock := fslock.New(lf)
+	msg := fmt.Sprintf("deleteIngress: %+v", obj)
+	log.Print(2, msg)
+
+	lock := zproxy.Lock()
 
 	index := getIngressIndex(ingressObj)
 	if index == -1 {
 		log.Print(0, "Ingress object was not found")
 		return
 	}
-	ingressesList = append(ingressesList[:index], ingressesList[index+1:]...) // remove element
+	zproxy.IngressesList = append(zproxy.IngressesList[:index], zproxy.IngressesList[index+1:]...) // remove element
 
-	updateIngressCfg(ingressesList)
+	zproxy.UpdateIngressCfg()
 
-	lock.Unlock()
+	zproxy.Unlock(lock)
 }
 
 func updateIngress(obj interface{}, newobj interface{}) {
@@ -146,9 +121,14 @@ func updateIngress(obj interface{}, newobj interface{}) {
 		return
 	}
 
-	lock := fslock.New(lf)
+	msg := fmt.Sprintf("updateIngress old: %+v", obj)
+	log.Print(2, msg)
+	msg = fmt.Sprintf("updateIngress new: %+v", newobj)
+	log.Print(2, msg)
 
-	oldList := ingressesList
+	lock := zproxy.Lock()
+
+	oldList := zproxy.IngressesList
 
 	// replace in the list
 	index := getIngressIndex(oldIngressObj)
@@ -156,11 +136,11 @@ func updateIngress(obj interface{}, newobj interface{}) {
 		log.Print(0, "Old ingress object was not found")
 		return
 	}
-	ingressesList[index] = ingressObj
+	zproxy.IngressesList[index] = ingressObj
 
-	if !updateIngressCfg(ingressesList) {
-		ingressesList = oldList
+	if !zproxy.UpdateIngressCfg() {
+		zproxy.IngressesList = oldList
 	}
 
-	lock.Unlock()
+	zproxy.Unlock(lock)
 }

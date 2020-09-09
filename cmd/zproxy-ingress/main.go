@@ -26,11 +26,12 @@ func main() {
 	controllers := []cache.Controller{
 		controller.GetSecretController(clientIngress),
 		controller.GetIngressController(clientIngress),
+		controller.GetConfigMapController(clientIngress),
 	}
 
 	for _, controller := range controllers {
 		go controller.Run(wait.NeverStop)
-		time.Sleep(5)
+		time.Sleep(time.Duration(config.Settings.Client.ClientStartGraceTme) * time.Second)
 	}
 
 	select {}

@@ -4,32 +4,33 @@ metadata:
   name: default-configuration
   namespace: zproxy-ingress
 data:
-  Listener: |
-    ListenerIP="0.0.0.0"
-    HTTPPort=80
-    HTTPSPort=443
-    Err414=""
-    Err500=""
-    Err501=""
-    Err503=""
-    DefaultCert="/certs/zencert.pem"
-    XHTTP=4
-    RewriteLocation=1
-    Ciphers="ALL"
-    DisableSSLProtocol="SSLv3"
-    SSLHonorCipherOrder=1
+  Listener.HTTPPort: "80"
+  Listener.HTTPSPort: "443"
+  Listener.Err414: ""
+  Listener.Err500: ""
+  Listener.Err501: ""
+  Listener.Err503: ""
+  Listener.XHTTP: "4"
+  Listener.RewriteLocation: "1"
+  Listener.RemoveRequestHeader: ""
+  Listener.RemoveResponseHeader: ""
+  Listener.AddRequestHeader: ""
+  Listener.AddResponseHeader: ""
+  Listener.DefaultCert: ""
+  Listener.Ciphers: "ALL"
+  Listener.DisableSSLProtocol: "SSLv3"
+  Listener.SSLHonorCipherOrder: "1"
 
-  Service: |
-    HTTPSBackends="false"
-    Priority="false"
-    StrictTransportSecurity=21600000
-    CookieName=""
-    CookiePath="/"
-    CookieDomain=""
-    CookieTTL="3600"
-    RedirectURL=""
-    RedirectCode=302
-    RedirectType="default"
-    SessionType=""
-    SessionTTL=120
-    SessionID=""
+  Service.HTTPSBackends: "false"
+  Service.StrictTransportSecurity: "21600000"
+  Service.Priority: "false"
+  Service.CookieName: ""
+  Service.CookiePath: "/"
+  Service.CookieDomain: ""
+  Service.CookieTTL: "3600"
+  Service.RedirectURL: ""
+  Service.RedirectCode: "302"
+  Service.RedirectType: "default"
+  Service.SessionType: ""
+  Service.SessionTTL: "120"
+  Service.SessionID: ""

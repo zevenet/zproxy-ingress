@@ -4,10 +4,17 @@ package types
 type Config struct {
 	Client struct {
 		ControllerName          string
+		ConfigMapName           string
 		AnnotationPrefix        string
 		DaemonCheckTimeout      int
 		ConfigurationReloadTime int
 		ClientLogsLevel         int
+		ClientStartGraceTme     int
+		ErrorFile414            string
+		ErrorFile500            string
+		ErrorFile501            string
+		ErrorFile503            string
+		DefaultCert             string
 	}
 	Global struct {
 		BinPath           string

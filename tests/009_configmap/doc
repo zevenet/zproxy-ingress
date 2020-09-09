@@ -1,0 +1,5 @@
+- config map is mapped in the container file "default-configuration"
+
+- only is read the namespace "namespace: zproxy-ingress" and name "name: default-configuration"
+
+- modify the default pem, the certificate has to be defined in the "namespace: zproxy-ingress"
