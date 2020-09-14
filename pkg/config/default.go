@@ -71,69 +71,69 @@ func removeEmpty(s []string) []string {
 func ReplaceParams(data map[string]string) {
 
 	// Listener Parameters
-	if val, ok := data["Listener.ListenerIP"]; ok {
+	if val, ok := data["listener-ip"]; ok {
 		Settings.Listener.ListenerIP = val
 	}
-	if val, ok := data["Listener.HTTPPort"]; ok {
+	if val, ok := data["listener-http-port"]; ok {
 		Settings.Listener.HTTPPort, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Listener.HTTPSPort"]; ok {
+	if val, ok := data["listener-https-port"]; ok {
 		Settings.Listener.HTTPSPort, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Listener.Err414"]; ok {
+	if val, ok := data["listener-error-414"]; ok {
 		if val == "" {
 			Settings.Listener.Err414 = ""
 		} else {
-			writeFile(&val, Settings.Client.ErrorFile414)
-			Settings.Listener.Err414 = Settings.Client.ErrorFile414
+			writeFile(&val, Settings.Paths.ErrorFile414)
+			Settings.Listener.Err414 = Settings.Paths.ErrorFile414
 		}
 	}
-	if val, ok := data["Listener.Err500"]; ok {
+	if val, ok := data["listener-error-500"]; ok {
 		if val == "" {
 			Settings.Listener.Err414 = ""
 		} else {
-			writeFile(&val, Settings.Client.ErrorFile500)
-			Settings.Listener.Err500 = Settings.Client.ErrorFile500
+			writeFile(&val, Settings.Paths.ErrorFile500)
+			Settings.Listener.Err500 = Settings.Paths.ErrorFile500
 		}
 	}
-	if val, ok := data["Listener.Err501"]; ok {
+	if val, ok := data["listener-error-501"]; ok {
 		if val == "" {
 			Settings.Listener.Err414 = ""
 		} else {
-			writeFile(&val, Settings.Client.ErrorFile501)
-			Settings.Listener.Err501 = Settings.Client.ErrorFile501
+			writeFile(&val, Settings.Paths.ErrorFile501)
+			Settings.Listener.Err501 = Settings.Paths.ErrorFile501
 		}
 	}
-	if val, ok := data["Listener.Err503"]; ok {
+	if val, ok := data["listener-error-503"]; ok {
 		if val == "" {
 			Settings.Listener.Err414 = ""
 		} else {
-			writeFile(&val, Settings.Client.ErrorFile503)
-			Settings.Listener.Err503 = Settings.Client.ErrorFile503
+			writeFile(&val, Settings.Paths.ErrorFile503)
+			Settings.Listener.Err503 = Settings.Paths.ErrorFile503
 		}
 	}
-	if val, ok := data["Listener.XHTTP"]; ok {
+	if val, ok := data["listener-xhttp"]; ok {
 		Settings.Listener.XHTTP, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Listener.RewriteLocation"]; ok {
+	if val, ok := data["listener-rewrite-location"]; ok {
 		Settings.Listener.RewriteLocation, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Listener.RemoveRequestHeader"]; ok {
+	if val, ok := data["listener-remove-request-header"]; ok {
 		Settings.Listener.RemoveRequestHeader = removeEmpty(strings.Split(val, "\n"))
 	}
-	if val, ok := data["Listener.RemoveResponseHeader"]; ok {
+	if val, ok := data["listener-remove-response-header"]; ok {
 		Settings.Listener.RemoveResponseHeader = removeEmpty(strings.Split(val, "\n"))
 	}
-	if val, ok := data["Listener.AddRequestHeader"]; ok {
+	if val, ok := data["listener-add-request-header"]; ok {
 		Settings.Listener.AddRequestHeader = removeEmpty(strings.Split(val, "\n"))
 	}
-	if val, ok := data["Listener.AddResponseHeader"]; ok {
+	if val, ok := data["listener-add-response-header"]; ok {
 		Settings.Listener.AddResponseHeader = removeEmpty(strings.Split(val, "\n"))
 	}
-	if val, ok := data["Listener.DefaultCert"]; ok {
+	if val, ok := data["listener-default-cert"]; ok {
 
 		if val == "" { // reset value
-			Settings.Listener.DefaultCert = Settings.Client.DefaultCert
+			Settings.Listener.DefaultCert = Settings.Paths.DefaultCert
 		} else {
 			certfile := GetCertificateFileName(val, os.Getenv("POD_NAMESPACE"))
 			if _, err := os.Stat(certfile); os.IsNotExist(err) {
@@ -144,55 +144,52 @@ func ReplaceParams(data map[string]string) {
 			}
 		}
 	}
-	if val, ok := data["Listener.Ciphers"]; ok {
+	if val, ok := data["listener-ciphers"]; ok {
 		Settings.Listener.Ciphers = val
 	}
-	if val, ok := data["Listener.DisableSSLProtocol"]; ok {
+	if val, ok := data["listener-disable-ssl-protocol"]; ok {
 		Settings.Listener.DisableSSLProtocol = strings.Split(val, "|")
 	}
-	if val, ok := data["Listener.SSLHonorCipherOrder"]; ok {
+	if val, ok := data["listener-ssl-honor-cipher-order"]; ok {
 		Settings.Listener.SSLHonorCipherOrder, _ = strconv.Atoi(val)
 	}
 
 	// Service Parameters
-	if val, ok := data["Service.HTTPSBackends"]; ok {
+	if val, ok := data["service-https-backends"]; ok {
 		Settings.Service.HTTPSBackends, _ = strconv.ParseBool(val)
 	}
-	if val, ok := data["Service.StrictTransportSecurity"]; ok {
+	if val, ok := data["service-strict-transport-security"]; ok {
 		Settings.Service.StrictTransportSecurity, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Service.Priority"]; ok {
-		Settings.Service.Priority, _ = strconv.ParseBool(val)
-	}
-	if val, ok := data["Service.CookieName"]; ok {
+	if val, ok := data["service-cookie-name"]; ok {
 		Settings.Service.CookieName = val
 	}
-	if val, ok := data["Service.CookiePath"]; ok {
+	if val, ok := data["service-cookie-path"]; ok {
 		Settings.Service.CookiePath = val
 	}
-	if val, ok := data["Service.CookieDomain"]; ok {
+	if val, ok := data["service-cookie-domain"]; ok {
 		Settings.Service.CookieDomain = val
 	}
-	if val, ok := data["Service.CookieTTL"]; ok {
+	if val, ok := data["service-cookie-ttl"]; ok {
 		Settings.Service.CookieTTL, _ = strconv.Atoi(val)
 	}
 	// this cannot be set, because it would replace all backends
 	//~ if val, ok := data["Service.RedirectURL"]; ok {
 	//~ Settings.Service.RedirectURL = val
 	//~ }
-	if val, ok := data["Service.RedirectCode"]; ok {
+	if val, ok := data["service-redirect-code"]; ok {
 		Settings.Service.RedirectCode, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Service.RedirectType"]; ok {
+	if val, ok := data["service-redirect-type"]; ok {
 		Settings.Service.RedirectType = val
 	}
-	if val, ok := data["Service.SessionType"]; ok {
+	if val, ok := data["service-session-type"]; ok {
 		Settings.Service.SessionType = val
 	}
-	if val, ok := data["Service.SessionTTL"]; ok {
+	if val, ok := data["service-session-ttl"]; ok {
 		Settings.Service.SessionTTL, _ = strconv.Atoi(val)
 	}
-	if val, ok := data["Service.SessionID"]; ok {
+	if val, ok := data["service-session-id"]; ok {
 		Settings.Service.SessionID = val
 	}
 }

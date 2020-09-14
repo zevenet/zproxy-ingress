@@ -1,0 +1,7 @@
+ControllerName="zproxy-ingress"
+ConfigMapName="default-configuration"
+AnnotationPrefix="zproxy.ingress.kubernetes.io"
+DaemonsCheckTimeout=20
+ClientLogsLevel=2
+ClientStartGraceTme=1
+# ConfigurationReloadTime=20

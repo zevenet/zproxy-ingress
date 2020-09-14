@@ -2,26 +2,29 @@ package types
 
 // Struct for global configuration of the client
 type Config struct {
+	Paths struct {
+		GoClientBin  string
+		Bin          string
+		BinCtl       string
+		ConfigFile   string
+		SocketFile   string
+		Cert         string
+		DefaultCert  string
+		ErrorFile414 string
+		ErrorFile500 string
+		ErrorFile501 string
+		ErrorFile503 string
+	}
 	Client struct {
-		ControllerName          string
-		ConfigMapName           string
-		AnnotationPrefix        string
-		DaemonCheckTimeout      int
-		ConfigurationReloadTime int
-		ClientLogsLevel         int
-		ClientStartGraceTme     int
-		ErrorFile414            string
-		ErrorFile500            string
-		ErrorFile501            string
-		ErrorFile503            string
-		DefaultCert             string
+		ControllerName      string
+		ConfigMapName       string
+		AnnotationPrefix    string
+		DaemonsCheckTimeout int
+		ClientLogsLevel     int
+		ClientStartGraceTme int
 	}
 	Global struct {
-		BinPath           string
-		BinCtlPath        string
-		ConfigFile        string
-		SocketFile        string
-		LogsLevel         int
+		ProxyLogsLevel    int
 		DHFile            string
 		ECDHCurve         string
 		TotalTO           int
@@ -54,7 +57,6 @@ type Config struct {
 	Service struct {
 		HTTPSBackends           bool
 		StrictTransportSecurity int
-		Priority                bool
 		CookieName              string
 		CookiePath              string
 		CookieDomain            string

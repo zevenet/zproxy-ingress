@@ -1,0 +1,12 @@
+HTTPSBackends="false"
+StrictTransportSecurity=21600000
+CookieName=""
+CookiePath="/"
+CookieDomain=""
+CookieTTL="3600"
+RedirectURL=""
+RedirectCode=302
+RedirectType="default"
+SessionType=""
+SessionTTL=120
+SessionID=""

@@ -1,0 +1,12 @@
+ListenerIP="0.0.0.0"
+HTTPPort=80
+HTTPSPort=443
+Err414=""
+Err500=""
+Err501=""
+Err503=""
+XHTTP=4
+RewriteLocation=1
+Ciphers="ALL"
+DisableSSLProtocol="SSLv3"
+SSLHonorCipherOrder=1

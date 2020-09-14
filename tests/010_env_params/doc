@@ -14,7 +14,7 @@
 - Others configurations
 
 [Client]
-DaemonCheckTimeout=20
+DaemonsCheckTimeout=20
 ConfigurationReloadTime=20
 ClientLogsLevel=1
 

@@ -6,7 +6,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 BASEDIR="$(dirname "$(pwd)")"
 TMP_FILE="/tmp/proxy_rules.cfg"
 OUTPUT_FILE="ingress.cfg"
-PROXY_FILE="ingress.cfg"
+PROXY_FILE="/run/ingress.cfg"
 PROXY_NAME="zproxy-ingress"
 PROXY_NAMESPACE="zproxy-ingress"
 CFG_YAML_DIR="../yaml"
@@ -14,6 +14,7 @@ GLOBAL_CFG_YAML="000_GLOBAL_CFG/"
 LOG_ERR_REGEXP='err'
 
 TEST_GRACE_TIME=5	# time to wait before checking the proxy cfg
+TEST_GRACE_TIME_LONG=15	# time to wait before checking the proxy cfg
 TEST_NAME=""
 REPORT_FILE=""
 WRITE_FLAG=0
@@ -104,7 +105,7 @@ function setEnv
 	# svc for tests
 	sh $GLOBAL_CFG_YAML/*.sh
 
-	waitGraceTime
+	waitGraceTime $TEST_GRACE_TIME_LONG
 }
 
 function unsetEnv

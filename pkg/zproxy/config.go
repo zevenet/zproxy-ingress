@@ -57,7 +57,7 @@ func printConfigError(cfgFile string, errString string) {
 
 func checkProxyConfig() int {
 
-	cmdLine := globalCfg.Global.BinPath + " -f " + globalCfg.Global.ConfigFile + " -c"
+	cmdLine := globalCfg.Paths.Bin + " -f " + globalCfg.Paths.ConfigFile + " -c"
 
 	log.Print(1, cmdLine)
 
@@ -67,7 +67,7 @@ func checkProxyConfig() int {
 
 	if err != nil {
 		log.Print(0, "Latest reload was: error")
-		printConfigError(globalCfg.Global.ConfigFile, string(out))
+		printConfigError(globalCfg.Paths.ConfigFile, string(out))
 		return 1
 	} else {
 		log.Print(0, "Latest reload was: success")
@@ -82,7 +82,7 @@ func ReloadDaemon() int {
 		return 1
 	}
 
-	cmdLine := globalCfg.Global.BinCtlPath + " -c " + globalCfg.Global.SocketFile + " -R 0"
+	cmdLine := globalCfg.Paths.BinCtl + " -c " + globalCfg.Paths.SocketFile + " -R 0"
 
 	log.Print(1, cmdLine)
 
@@ -113,7 +113,7 @@ func CreateProxyConfig(ingressesList []*v1beta.Ingress) int {
 	addProxyConfigListener(&buffFile, ingressesList)
 
 	// save file
-	if writeProxyConfig(&buffFile, globalCfg.Global.ConfigFile) != 0 {
+	if writeProxyConfig(&buffFile, globalCfg.Paths.ConfigFile) != 0 {
 		return 1
 	}
 
@@ -123,13 +123,13 @@ func CreateProxyConfig(ingressesList []*v1beta.Ingress) int {
 func addProxyConfigGlobal(buff *string) {
 
 	*buff += fmt.Sprintf("Daemon\t%d\n", 0) +
-		fmt.Sprintf("LogLevel\t%d\n", globalCfg.Global.LogsLevel) +
+		fmt.Sprintf("LogLevel\t%d\n", globalCfg.Global.ProxyLogsLevel) +
 		fmt.Sprintf("logfacility\t%c\n", '-') +
 		fmt.Sprintf("Timeout\t%d\n", globalCfg.Global.TotalTO) +
 		fmt.Sprintf("ConnTO\t%d\n", globalCfg.Global.ConnTO) +
 		fmt.Sprintf("Alive\t%d\n", globalCfg.Global.AliveTO) +
 		fmt.Sprintf("Client\t%d\n", globalCfg.Global.ClientTO) +
-		fmt.Sprintf("Control\t\"%s\"\n", globalCfg.Global.SocketFile) +
+		fmt.Sprintf("Control\t\"%s\"\n", globalCfg.Paths.SocketFile) +
 
 		// SSL settings
 		fmt.Sprintf("DHParams\t\"%s\"\n", globalCfg.Global.DHFile) +

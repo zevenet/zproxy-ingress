@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var prePath = "/certs"
+var prePath = "/etc/zproxy/certs"
 var fileExt = ".pem"
 
 // use the subdirectory of the certificate to apply secrets namespaces

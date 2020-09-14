@@ -4,50 +4,49 @@ metadata:
   name: default-configuration
   namespace: zproxy-ingress
 data:
-  Listener.HTTPPort: "8080"
-  Listener.HTTPSPort: "80443"
-  Listener.Err414: |
+  listener-http-port: "8080"
+  listener-https-port: "80443"
+  listener-error-414: |
     The page was not found
     error 404
-  Listener.Err500: |
+  listener-error-500: |
     Internal Server Error
     error 500
-  Listener.Err501: |
+  listener-error-501: |
     Not implemented
     error 501
-  Listener.Err503: |
+  listener-error-503: |
     Service unavailable
     error 503
-  Listener.XHTTP: "5"
-  Listener.RewriteLocation: "0"
-  Listener.RemoveRequestHeader: |
+  listener-xhttp: "0"
+  listener-rewrite-location: "0"
+  listener-remove-request-header: |
     ^host
     x-forward-to
-  Listener.RemoveResponseHeader: |
+  listener-remove-response-header: |
     ^host
     x-forward-to
-  Listener.AddRequestHeader: |
+  listener-add-request-header: |
     X-Forwarded-Port: 80
     X-Forwarded-Proto: HTTP
-  Listener.AddResponseHeader: |
+  listener-add-response-header: |
     X-Forwarded-Port: 443
     X-Forwarded-Proto: HTTPS
 
   # created in test 000
-  Listener.DefaultCert: "default-cert"
-  Listener.Ciphers: "AES"
-  Listener.DisableSSLProtocol: "SSLv2|TLSv1_1"
-  Listener.SSLHonorCipherOrder: "0"
+  listener-default-cert: "default-cert"
+  listener-ciphers: "AES"
+  listener-disable-ssl-protocol: "SSLv2|TLSv1_1"
+  listener-ssl-honor-cipher-order: "0"
 
-  Service.HTTPSBackends: "true"
-  Service.StrictTransportSecurity: "100000"
-  Service.Priority: "true"
-  Service.CookieName: "persistcookie"
-  Service.CookiePath: "/index.html"
-  Service.CookieDomain: "cookie.zevenet.com"
-  Service.CookieTTL: "110"
-  Service.RedirectCode: "301"
-  Service.RedirectType: "append"
-  Service.SessionType: "COOKIE"
-  Service.SessionTTL: "3600"
-  Service.SessionID: "cookieIDToken"
+  service-https-backends: "true"
+  service-strict-transport-security: "100000"
+  service-cookie-name: "persistcookie"
+  service-cookie-path: "/index.html"
+  service-cookie-domain: "cookie.zevenet.com"
+  service-cookie-ttl: "110"
+  service-redirect-code: "301"
+  service-redirect-type: "append"
+  service-session-type: "COOKIE"
+  service-session-ttl: "3600"
+  service-session-id: "cookieIDToken"

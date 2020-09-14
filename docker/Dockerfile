@@ -19,22 +19,10 @@ RUN apt-get update
 RUN apt-get install -y zproxy
 
 # load container parameters
-COPY ./container_params.conf /tmp.conf
-RUN grep -Ev '^\s*#' /tmp.conf > /container_params.conf
-RUN grep -Ev '^\s*\[' /container_params.conf > /env.conf
-COPY ./ingress.tpl /ingress.tpl
+COPY ./cfg_tpl /cfg_tpl
 
 # After compiling the Golang client, copy the binary to / and make it the entrypoint
 COPY ./app /goclient
 
-RUN mkdir /certs
-COPY ./zencert.pem /certs/zencert.pem
-COPY ./dh2048.pem /dh2048.pem
+COPY ./etc/ /etc/
 COPY ./start.sh /start.sh
-COPY ./ingress.tpl /ingress.cfg
-
-
-# remove tmp files
-RUN rm /tmp.conf
-
-#CMD [ "/bin/bash", "-c", "/start.sh" ]
