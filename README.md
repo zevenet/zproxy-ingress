@@ -1,4 +1,5 @@
 
+<a name="summary"></a>  
 # zproxy-ingress
 
 [![Go report card](https://goreportcard.com/badge/github.com/zevenet/zproxy-ingress)](https://goreportcard.com/report/github.com/zevenet/zproxy-ingress)
@@ -16,15 +17,41 @@ This controller needs some permissions to read information from the Kubernetes A
 
 The zproxy-ingress container contains two daemons, a GO client that connects with the k8s API and a zproxy daemon that manages the incoming requests and forwards them to the k8s services.
 
+## Index
 
+1. [ Starting ](#starting)  
+	1.1 [Build](#build)</br>
+	1.2 [Some commands to inspect the pod and container](#build)
+	
+2. [ Settings ](#settings)  
+	2.1 [Container configuration files](#configfiles)</br>
+	2.2 [Environment varibles](#environment)</br>
+	2.3 [ConfigMaps](#configmaps)</br>
+	2.4 [Annotations](#annotations)
+	
+3. [Some notes ](#someNotes)  
+	3.1 [Ingress Namespace](#ingressNamespace)</br>
+	3.2 [How to link an ingress rule with zproxy-ingress](#linkAnIngressRule)</br>
+	3.3 [How to set up the default ingress controller](#defaultIngressController)</br>
+	3.4 [How SSL certificates work](#certificatesWork)</br>
+	3.5 [How to configure SSL certificates](#configureCertificates)</br>
+	3.6 [How to configure the default SSL certificate](#configureDefaultCertificate)</br>
+	3.7 [Configuring DH param](#configureDHparam)</br>
+	3.8 [Load balancing among ingress backends](#loadBalancingAmongIngress)</br>
+	3.9 [Define a redirect in an ingress rule](#defineRediret)</br>
+	3.10 [Default backend](#defaultBackend)
 
+4. [ Contributing ](#contributing)  
+5. [ Authors ](#authors)  
+
+<a name="starting"></a>  
 ## Starting :rocket:
 
+<a name="build"></a>  
 ### Build
 
 This project depends on Zevenet CE repository to create the container with the latest zproxy package. So, this project
 contains only the code for the Kubernetes GO client and to create the docker container, it does not manage any zproxy source code or compilation.
-
 
 ```shell
 root@k8s:~# git clone https://github.com/zevenet/zproxy-ingress
@@ -33,7 +60,7 @@ root@k8s:~# ./build.sh
 root@k8s:~# kubectl apply -f yaml/
 ```
 
-
+<a name="commands"></a>  
 ### Some commands to inspect the pod and container
 
 * Get the logs of the pod:
@@ -55,10 +82,10 @@ root@k8s:~# kubectl logs `kubectl get pods -n zproxy-ingress | grep zproxy | gre
 ```
 
 
-
+<a name="settings"></a>  
 ## Settings :gear:
 
-
+<a name="configfiles"></a>  
 ### Container configuration files
 
 Those configuration files defined the configuration that the container is configured. This configuration can be modified through the different k8s features (ENV, configmaps and annotations).
@@ -73,7 +100,7 @@ Those configuration files defined the configuration that the container is config
 
 *  Service: parameters for a zproxy services. The default values can be modified using configmap or can be specified for a service through annotations.
 
-
+<a name="environment"></a>  
 ### Environment variables
 
 Some examples can be checked in the test: tests/010_env_params/
@@ -105,8 +132,8 @@ Variables for the global configuration of the zproxy daemon.
 
 * Ignore100Continue: If it is set with value **1**, zproxy will ignore the "Expect: 100-continue" header. If it is set with **0** (by default) zproxy will manage "Expect: 100-continue" headers.
 
-
-### Configmaps
+<a name="configmaps"></a>  
+### ConfigMaps	
 
 Some examples can be checked in the test: tests/009_configmap/
 
@@ -187,6 +214,7 @@ The service parameters will be used as the default configuration for services. T
 * service-session-ttl: The time to live for an inactive client session (max session age) in seconds.
 
 
+<a name="annotations"></a>  
 ### Annotations
 
 They are used to overwritten the global service configuration. The selected domain for zproxy annotations is "**`zproxy.ingress.kubernetes.io/`**".
@@ -209,13 +237,15 @@ The description about each annotation can be checked in the [configmap](https://
 * `zproxy.ingress.kubernetes.io/service-session-ttl`
 
 
-
+<a name="someNotes"></a>  
 ## Some notes  :memo:
 
+<a name="ingressNamespace"></a>  
 ### Ingress Namespace
 
 An ingress rule has assigned a namespace. The resources (secrets and services) that the rule manages have to be in the same namespace than the ingress rule
 
+<a name="linkAnIngressRule"></a>  
 ### How to link an ingress rule with zproxy-ingress
 
 Zproxy-ingress will configure the ingress rules that contain the incressClassName **zproxy-ingress**.
@@ -231,7 +261,7 @@ spec:
   ...
 ```
 
-
+<a name="defaultIngressController"></a>  
 ### How to set up the default ingress controller
 
 A Kubernetes IngressClass object is required to set the zproxy-ingress as the default one.
@@ -249,6 +279,7 @@ spec:
   controller: zevenet/ingress-controller
 ```
 
+<a name="certificatesWork"></a>  
 ### How SSL certificates work
 
 HTTPS listener will be configured in the ingress rules that contain the **tls** field.
@@ -275,7 +306,7 @@ spec:
 ```
 
 
-
+<a name="configureCertificates"></a>  
 ### How to configure SSL certificates
 
 SSL certificates have been integrated with Kubernetes  using the secret feature. Zproxy uses certificates with *pem* format, for that reason, the secrets should be created from a PEM file or using Kubunernetes *TLS* secrets (then, zproxy-ingress client will create the *pem* certificate).
@@ -295,13 +326,14 @@ root@k8s:~# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout <keyfile
 root@k8s:~# kubectl create secret tls <secretname> --key <keyfile> --cert <certfile> [-n namespace]
 ```
 
+<a name="configureDefaultCertificate"></a>  
 ### How to configure the default SSL certificate
 
 To define a certificate as the default one when any other is used for an HTTP request, it has to comply with the following requirements:
 * It should be created using the wildcard domain '*'.
 * It has to be defined in the "**zproxy-ingress**" namespace.
 
-
+<a name="configureDHparam"></a>  
 ### Configuring DH param
 
 The DH params file used to encrypt the HTTPS communication has been included in the container for saving time in the pod deployment, but, it is recommended to generate a new one and linked it with the zproxy-ingress configuration.
@@ -318,7 +350,7 @@ root@k8s:~# openssl dhparam -5 -out /tmp/dh2048.pem 2048
  The ENV variable **DHFile** (daemontset.yaml file) can be modified in order to change the DH param path inside the container.
 
 
-
+<a name="loadBalancingAmongIngress"></a>  
 ### Load balancing among ingress backends
 
 Zproxy-ingress will load balance the incoming requests among different backends if there are several ingress rules with the same match information (host and URI).
@@ -348,7 +380,7 @@ spec:
           servicePort: 80
 ```
 
-
+<a name="defineRediret"></a>  
 ### Define a redirect in an ingress rule
 
 A redirect can be configured as the response to a client in an ingress rule. If the redirect is configured, the backend struct from the ingress rule will be ignored.
@@ -360,7 +392,7 @@ The following annotations define the behavior of the redirect action:
 * zproxy.ingress.kubernetes.io/service-redirect-type: it specifies how to create the response URL regarding the incoming one. See the configmap "service-redirect-type" parameter for further information.
 
 
-
+<a name="defaultBackend"></a>  
 ### Default backend
 
 Zproxy-ingress allows adding a default backend that will respond in case that any rule matches the incoming request (the *path* and *host* fields are not achieved).
@@ -385,6 +417,7 @@ spec:
     servicePort: 80
 ```
 
+<a name="contributing"></a>  
 ## Contributing :clap:
 
 **Pull Requests are WELCOME!** Please submit any fixes or improvements:
@@ -393,7 +426,8 @@ spec:
 * [Submit Issues](https://github.com/zevenet/zproxy-ingress/issues)
 * [Pull Requests](https://github.com/zevenet/zproxy-ingress/pulls)
 
-
+<a name="authors"></a>  
 ## Authors  :nerd_face:
 
-Zevenet Team
+ZEVENET Team
+
