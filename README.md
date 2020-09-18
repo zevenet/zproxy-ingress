@@ -50,7 +50,7 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 <a name="build"></a>  
 ### Build
 
-This project depends on Zevenet CE repository to create the container with the latest zproxy package. So, this project
+This project depends on ZEVENET CE repository to create the container with the latest zproxy package. So, this project
 contains only the code for the Kubernetes GO client and to create the docker container, it does not manage any zproxy source code or compilation.
 
 ```shell
