@@ -130,11 +130,7 @@ func addProxyConfigGlobal(buff *string) {
 		fmt.Sprintf("Alive\t%d\n", globalCfg.Global.AliveTO) +
 		fmt.Sprintf("Client\t%d\n", globalCfg.Global.ClientTO) +
 		fmt.Sprintf("Control\t\"%s\"\n", globalCfg.Paths.SocketFile) +
-
-		// SSL settings
 		fmt.Sprintf("DHParams\t\"%s\"\n", globalCfg.Global.DHFile) +
-		fmt.Sprintf("ECDHCurve\t\"%s\"\n", globalCfg.Global.ECDHCurve) +
-		fmt.Sprintf("Ignore100Continue\t%d\n", globalCfg.Global.Ignore100Continue) +
 
 		fmt.Sprintf("\n")
 }

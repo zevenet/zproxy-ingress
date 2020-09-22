@@ -24,14 +24,12 @@ type Config struct {
 		ClientStartGraceTme int
 	}
 	Global struct {
-		ProxyLogsLevel    int
-		DHFile            string
-		ECDHCurve         string
-		TotalTO           int
-		ConnTO            int
-		AliveTO           int
-		ClientTO          int
-		Ignore100Continue int
+		ProxyLogsLevel int
+		DHFile         string
+		TotalTO        int
+		ConnTO         int
+		AliveTO        int
+		ClientTO       int
 	}
 	Listener struct {
 		ListenerIP string

@@ -1,8 +1,6 @@
 ProxyLogsLevel=5
 DHFile="/etc/zproxy/dh2048.pem"
-ECDHCurve="prime256v1"
 TotalTO=45
 ConnTO=20
 AliveTO=10
 ClientTO=30
-Ignore100Continue=0

@@ -38,8 +38,6 @@ spec:
           value: "6"
         - name: DHFile
           value: "/etc/zproxy/dh2048.pem"
-        - name: ECDHCurve
-          value: "prime256v1"
         - name: TotalTO
           value: "41"
         - name: ConnTO
@@ -48,8 +46,6 @@ spec:
           value: "11"
         - name: ClientTO
           value: "33"
-        - name: Ignore100Continue
-          value: "1"
 
      # mount dhparam
      #   volumeMounts:

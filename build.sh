@@ -4,6 +4,14 @@ set -e
 
 DOCKER_PATH="./docker"
 
+# Optionally, use a nftlb devel package
+if [ -n "$1" ]; then
+	cp "$1" $DOCKER_PATH/zproxy.deb
+else
+	# Use empty file to avoid docker COPY directive failure
+	touch $DOCKER_PATH/zproxy.deb
+fi
+
 # Before running this script, you MUST BE ROOT and you need to have the following tools installed:
 #   - Docker
 #   - Docker-machine
@@ -23,5 +31,5 @@ docker build -t zproxy-ingress $DOCKER_PATH
 
 # STEP 3:
 #   Clean residual files.
-rm -f $DOCKER_PATH/app
+rm -f $DOCKER_PATH/app $DOCKER_PATH/zproxy.deb
 

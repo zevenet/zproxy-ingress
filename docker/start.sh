@@ -52,9 +52,6 @@ Alive           $AliveTO
 Client          $ClientTO
 Control         \"$SocketFile\"
 DHParams		\"$DHFile\"
-ECDHCurve		\"$ECDHCurve\"
-Ignore100Continue $Ignore100Continue
-
 
 ListenHTTP
         Address 0.0.0.0
