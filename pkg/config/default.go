@@ -26,6 +26,9 @@ func Init() {
 		panic(err)
 	}
 
+	// reset default certificate
+	Default.Listener.DefaultCert = Default.Paths.DefaultCert
+
 	if Default.Client.ClientLogsLevel > 0 {
 		log.SetLevel(Default.Client.ClientLogsLevel)
 		msg := fmt.Sprintf("%+v\n", Default)
@@ -130,12 +133,13 @@ func ReplaceParams(data map[string]string) {
 	if val, ok := data["listener-add-response-header"]; ok {
 		Settings.Listener.AddResponseHeader = removeEmpty(strings.Split(val, "\n"))
 	}
+
 	if val, ok := data["listener-default-cert"]; ok {
 
-		if val == "" { // reset value
-			Settings.Listener.DefaultCert = Settings.Paths.DefaultCert
-		} else {
+		if val != "" { // reset value
+
 			certfile := GetCertificateFileName(val, os.Getenv("POD_NAMESPACE"))
+
 			if _, err := os.Stat(certfile); os.IsNotExist(err) {
 				msg := fmt.Sprintf("Error, the default certificate '%s' (%s) was not found\n", val, certfile)
 				log.Print(0, msg)

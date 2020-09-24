@@ -29,6 +29,7 @@ COPY ./start.sh /start.sh
 
 
 # Replace zproxy with a devel version if zproxy.deb exists in this directory
-COPY ${DOCKER_PATH}/zproxy.deb .
-RUN if [ -s "zproxy.deb" ] ; then echo "Installing zproxy-devel"; dpkg -i /zproxy.deb; fi
-#RUN if [ -s "zproxy.deb" ] ; then echo "Installing zproxy-devel"; dpkg -i /zproxy.deb; rm /zproxy.deb; fi
+COPY ./zproxy.deb .
+RUN if [ -s "zproxy.deb" ] ; then dpkg -i ./zproxy.deb; fi
+RUN rm zproxy.deb
+

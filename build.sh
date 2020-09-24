@@ -2,11 +2,12 @@
 
 set -e
 
-DOCKER_PATH="./docker"
+BASEDIR=$(dirname "$0")
+DOCKER_PATH="${BASEDIR}/docker"
 
 # Optionally, use a nftlb devel package
-if [ -n "$1" ]; then
-	cp "$1" $DOCKER_PATH/zproxy.deb
+if [ -s "$1" ]; then
+	cp -v "$1" $DOCKER_PATH/zproxy.deb
 else
 	# Use empty file to avoid docker COPY directive failure
 	touch $DOCKER_PATH/zproxy.deb
@@ -31,5 +32,4 @@ docker build -t zproxy-ingress $DOCKER_PATH
 
 # STEP 3:
 #   Clean residual files.
-rm -f $DOCKER_PATH/app $DOCKER_PATH/zproxy.deb
-
+rm -fv $DOCKER_PATH/app $DOCKER_PATH/zproxy.deb
