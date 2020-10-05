@@ -51,7 +51,7 @@ root@k8s:~# kubectl apply -f https://raw.githubusercontent.com/zevenet/zproxy-in
 
 Note:
 
-* Remember specifying the ingress controller in the ingress rule
+* Remember specifying the ingress controller in the ingress rule:
 
 ```yml
 apiVersion: networking.k8s.io/v1beta1
@@ -62,7 +62,7 @@ spec:
   ingressClassName: zproxy-ingress
 ``` 
   
-* Or set zproxy the default ingress controller:
+* Or setting zproxy the default ingress controller:
 
 ```shell
 root@k8s:~# kubectl apply -f https://raw.githubusercontent.com/zevenet/zproxy-ingress/master/yaml/examples/default-ingressclass.yaml
