@@ -24,7 +24,7 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 	- [Some commands to inspect the pod and container](#some-commands-to-inspect-the-pod-and-container)
 - [Settings](#settings-gear)
 	- [Container configuration files](#container-configuration-files)
-	- [Environment varibles](#environment)
+	- [Environment variables](#environment-variables)
 	- [ConfigMaps](#configmaps)
 	- [Annotations](#annotations)
 - [Some notes](#some-notes-memo)
@@ -39,7 +39,7 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 	- [Define a redirect in an ingress rule](#define-a-redirect-in-an-ingress-rule)
 	- [Default backend](#default-backend)
 - [Contributing](#contributing-clap)
-- [Authors](#authors-nerd_face)
+- [Authors](#authors--nerd_face)
 
 ## Starting :rocket:
 
@@ -53,14 +53,14 @@ Note:
 
 * Remember specifying the ingress controller in the ingress rule
 
-`
+```yml
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: ingress-test-001
 spec:
   ingressClassName: zproxy-ingress
-` 
+``` 
   
 * Or set zproxy the default ingress controller:
 
