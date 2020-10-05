@@ -1,0 +1,72 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-content-dev
+  namespace: www
+data:
+  index: "\n\tDEV WEBSITE (it is being developed)!\n\n"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-dev
+  namespace: www
+  labels:
+    app: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-dev
+  template:
+    metadata:
+      labels:
+        app: app-dev
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        volumeMounts:
+        - name: htmlpath
+          mountPath: /usr/share/nginx/html
+      volumes:
+        - name: htmlpath
+          configMap:
+            name: html-content-dev
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-dev-svc
+  namespace: www
+spec:
+  type: ClusterIP
+  selector:
+    app: app-dev
+  ports:
+    - protocol: TCP
+      port: 80
+
+---
+
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 011-ingress-web-dev
+  namespace: www
+spec:
+  ingressClassName: zproxy-ingress
+
+  rules:
+  - host: dev.www.zevenet.com
+    http:
+      paths:
+      - backend:
+          serviceName: web-dev-svc
+          servicePort: 80
+

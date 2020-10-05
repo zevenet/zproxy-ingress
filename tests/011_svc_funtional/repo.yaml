@@ -1,0 +1,30 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-content-repo
+  namespace: client-apps
+data:
+  index: "\n\tCode repository!\n\n"
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 011-ingress-repo
+  namespace: client-apps
+
+  annotations:
+    zproxy.ingress.kubernetes.io/service-redirect-url: "https://github.com/zevenet"
+
+spec:
+  ingressClassName: zproxy-ingress
+
+  rules:
+  - http:
+      paths:
+      - path: /repo
+        backend:
+          serviceName: not-used
+          servicePort: 80

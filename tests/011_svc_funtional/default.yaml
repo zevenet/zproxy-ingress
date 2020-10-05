@@ -1,0 +1,66 @@
+
+# default
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-content
+data:
+  index: "\n\tDefault services!\n\n"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-bck
+  labels:
+    app: default-bck
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: default-bck
+  template:
+    metadata:
+      labels:
+        app: default-bck
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        volumeMounts:
+        - name: htmlpath
+          mountPath: /usr/share/nginx/html
+      volumes:
+        - name: htmlpath
+          configMap:
+            name: html-content
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: default-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: default-bck
+  ports:
+    - protocol: TCP
+      port: 80
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 011-ingress-default-bck
+spec:
+  ingressClassName: zproxy-ingress
+
+  backend:
+    serviceName: default-svc
+    servicePort: 80

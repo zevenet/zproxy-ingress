@@ -1,0 +1,74 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-content-upload
+  namespace: client-apps
+data:
+  index: "\n\tUpload the content!\n\n"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-upload
+  namespace: client-apps
+  labels:
+    app: app-upload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-upload
+  template:
+    metadata:
+      labels:
+        app: app-upload
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        volumeMounts:
+        - name: htmlpath
+          mountPath: /usr/share/nginx/html
+      volumes:
+        - name: htmlpath
+          configMap:
+            name: html-content-upload
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: uploads-svc
+  namespace: client-apps
+spec:
+  type: ClusterIP
+  selector:
+    app: app-upload
+  ports:
+    - protocol: TCP
+      port: 80
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: 011-ingress-upload
+  namespace: client-apps
+
+spec:
+  ingressClassName: zproxy-ingress
+
+  tls:
+  - secretName: tls-cert
+
+  rules:
+  - http:
+      paths:
+      - path: /uploads
+        backend:
+          serviceName: uploads-svc
+          servicePort: 80

@@ -1,0 +1,33 @@
+pruebas:
+
+probar a borrar ingresses y que los demas servicios funcionan
+probar a borrar un svc y que la cfg continue
+probar a crear/mod/borrar ssl cert
+
+---
+
+escenario:
+- default: http
+	# echo quit | openssl s_client -showcerts -servername kubelab -connect kubelab:30491 | grep "CN = \*,"
+	# curl -s http://kubelab:30315/index | grep "Default"
+	# curl -sk https://kubelab:30491/index | grep "Default"
+
+	* probar con redirect
+
+
+- dev.www.web: http , host match
+	# echo quit | openssl s_client -showcerts -servername dev.www.zevenet.com -connect kubelab:30491 | grep "CN = \*.zevenet.com"
+
+- www.web: http y https (def ssl: * ), host match
+	# echo quit | openssl s_client -showcerts -servername www.zevenet.com -connect kubelab:30491 | grep "CN = \*.zevenet.com"
+
+- client-apps.upload: https ( ssl: upload.domain.com, especifico para el svc ), path match
+	# echo quit | openssl s_client -showcerts -servername upload.zevenet.com -connect kubelab:SSL_PORT | grep "CN = upload.zevenet.com"
+	#
+	* probar cambiando tipo de path match
+
+- client-apps.repo: http, redirect
+
+- admin-apps.login: https ( ssl: *.domain.com, debe tener prioridad sobre el de por defecto ), path match
+
+---

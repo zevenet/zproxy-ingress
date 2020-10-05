@@ -1,0 +1,21 @@
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: www
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: client-apps
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin-apps
+
+---
