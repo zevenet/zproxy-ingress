@@ -319,7 +319,7 @@ root@k8s:~# kubectl create secret generic <secretname> --from-file=pem=./zencert
 ```
 Creating an autosigned certificate and a secret (notice that is saved in a secret adding the **key** and the **cert**  files):
 ```shell
-root@k8s:~# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout <keyfile> -out <certfile> -subj "/=domain.com/OCN=domain.com"
+root@k8s:~# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout <keyfile> -out <certfile> -subj "O=<organization>/CN=<CommonName>"
 root@k8s:~# kubectl create secret tls <secretname> --key <keyfile> --cert <certfile> [-n namespace]
 ```
 
@@ -327,7 +327,7 @@ root@k8s:~# kubectl create secret tls <secretname> --key <keyfile> --cert <certf
 ### How to configure the default SSL certificate
 
 To define a certificate as the default one when any other is used for an HTTP request, it has to comply with the following requirements:
-* It should be created using the wildcard domain '*'.
+* It should be created using the common name '*' to mach any FQDN.
 * It has to be defined in the "**zproxy-ingress**" namespace.
 
 <a name="configureDHparam"></a>
