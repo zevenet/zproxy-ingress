@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zproxy-ingress
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-configuration
+  namespace: zproxy-ingress
+data:
+  listener-http-port: "80"
+  listener-https-port: "443"
+  listener-error-414: ""
+  listener-error-500: ""
+  listener-error-501: ""
+  listener-error-503: ""
+  listener-xhttp: "4"
+  listener-rewrite-rocation: "1"
+  listener-remove-request-header: ""
+  listener-remove-response-header: ""
+  listener-add-request-header: ""
+  listener-add-response-header: ""
+  listener-default-cert: ""
+  listener-ciphers: "ALL"
+  listener-disable-ssl-protocol: "SSLv3"
+  listener-ssl-honor-cipher-order: "1"
+
+  service-https-backends: "false"
+  service-strict-transport-security: "21600000"
+  service-cookie-name: ""
+  service-cookie-path: "/"
+  service-cookie-domain: ""
+  service-cookie-ttl: "3600"
+  service-redirect-url: ""
+  service-redirect-code: "302"
+  service-redirect-type: "default"
+  service-session-type: ""
+  service-session-ttl: "120"
+  service-session-id: ""
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zproxy-ingress-service-account
+  namespace: zproxy-ingress
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: zproxy-ingress-cluster-role
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+      - endpoints
+      - nodes
+      - pods
+      - secrets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - nodes
+    verbs:
+      - get
+  - apiGroups:
+      - ''
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io   # k8s 1.14+
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io   # k8s 1.14+
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+  - apiGroups:
+      - networking.k8s.io   # k8s 1.14+
+    resources:
+      - ingressclasses
+    verbs:
+      - get
+      - list
+      - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: zproxy-ingress-cluster-role-binding
+  namespace: zproxy-ingress
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: zproxy-ingress-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: zproxy-ingress-service-account
+  namespace: zproxy-ingress
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: zproxy-ingress
+  namespace: zproxy-ingress
+spec:
+  selector:
+      matchLabels:
+        ingress-controller: zproxy-ingress
+  template:
+    metadata:
+      labels:
+        ingress-controller: zproxy-ingress
+    spec:
+      dnsPolicy: ClusterFirst
+      serviceAccountName: zproxy-ingress-service-account
+      containers:
+      - name: zproxy-ingress
+        image: zevenet/zproxy-ingress
+        command: [ "/bin/bash", "-c", "/start.sh" ]
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zproxy-ingress-controller
+  namespace: zproxy-ingress
+  labels:
+    ingress-controller: zproxy-ingress
+spec:
+  type: NodePort
+  selector:
+    ingress-controller: zproxy-ingress
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: http
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+      name: https
+---

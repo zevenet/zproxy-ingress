@@ -9,7 +9,7 @@ OUTPUT_FILE="ingress.cfg"
 PROXY_FILE="/run/ingress.cfg"
 PROXY_NAME="zproxy-ingress"
 PROXY_NAMESPACE="zproxy-ingress"
-CFG_YAML_DIR="../yaml"
+CFG_YAML_DIR="../yaml/examples"
 GLOBAL_CFG_YAML="000_GLOBAL_CFG/"
 LOG_ERR_REGEXP='err'
 

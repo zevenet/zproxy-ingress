@@ -16,8 +16,7 @@ spec:
       serviceAccountName: zproxy-ingress-service-account
       containers:
       - name: zproxy-ingress
-        image: zproxy-ingress
-        imagePullPolicy: Never
+        image: zevenet/zproxy-ingress
         command: [ "/bin/bash", "-c", "/start.sh" ]
         resources:
           limits:
