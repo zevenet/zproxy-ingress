@@ -23,13 +23,14 @@ fi
 # STEP 1:
 #   Compile cmd/app/main.go.
 #   The binary will be called "app".
-GOOS=linux go build -o $DOCKER_PATH/app ./cmd/zproxy-ingress
+#GOOS=linux go build -o $DOCKER_PATH/app ./cmd/zproxy-ingress
 
 # STEP 2:
 #   The client container will be created using its Dockerfile.
 #   It will be made for Docker, not for Minikube (this will come later).
-docker build -t zproxy-ingress $DOCKER_PATH
+docker build -t zproxy-ingress -f $DOCKER_PATH/Dockerfile --build-arg DOCKER_PATH="$DOCKER_PATH" .
 
 # STEP 3:
 #   Clean residual files.
 rm -fv $DOCKER_PATH/app $DOCKER_PATH/zproxy.deb
+#~ docker image prune -f --filter label=stage=intermediate
