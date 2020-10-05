@@ -1,5 +1,4 @@
 
-<a name="summary"></a>
 # zproxy-ingress
 
 [![Go report card](https://goreportcard.com/badge/github.com/zevenet/zproxy-ingress)](https://goreportcard.com/report/github.com/zevenet/zproxy-ingress)
@@ -19,35 +18,58 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 
 ## Index
 
-1. [ Starting ](#starting)
-	1.1 [Build](#build)</br>
-	1.2 [Some commands to inspect the pod and container](#build)
+- [Starting](#starting-)
+	- [Deployment](#deployment)
+	- [Build](#build)
+	- [Some commands to inspect the pod and container](#some-commands-to-inspect-the-pod-and-container)
+- [Settings](#settings-)
+	- [Container configuration files](#container-configuration-files)
+	- [Environment varibles](#environment)
+	- [ConfigMaps](#configmaps)
+	- [Annotations](#annotations)
+- [Some notes](#some-notes-)
+	- [Ingress Namespace](#ingress-namespace)
+	- [How to link an ingress rule with zproxy-ingress](#how-to-link-an-ingress-rule-with-zproxy-ingress)
+	- [How to set up the default ingress controller](#how-to-set-up-the-default-ingress-controller)
+	- [How SSL certificates work](#how-ssl-certificates-work)
+	- [How to configure SSL certificates](#how-to-configure-ssl-certificates)
+	- [How to configure the default SSL certificate](#how-to-configure-the-default-ssl-certificate)
+	- [Configuring DH param](#configuring-dh-param)
+	- [Load balancing among ingress backends](#load-balancing-among-ingress-backends)
+	- [Define a redirect in an ingress rule](#define-a-redirect-in-an-ingress-rule)
+	- [Default backend](#default-backend)
+- [Contributing](#contributing-)
+- [Authors](#authors-)
 
-2. [ Settings ](#settings)
-	2.1 [Container configuration files](#configfiles)</br>
-	2.2 [Environment varibles](#environment)</br>
-	2.3 [ConfigMaps](#configmaps)</br>
-	2.4 [Annotations](#annotations)
-
-3. [Some notes ](#someNotes)
-	3.1 [Ingress Namespace](#ingressNamespace)</br>
-	3.2 [How to link an ingress rule with zproxy-ingress](#linkAnIngressRule)</br>
-	3.3 [How to set up the default ingress controller](#defaultIngressController)</br>
-	3.4 [How SSL certificates work](#certificatesWork)</br>
-	3.5 [How to configure SSL certificates](#configureCertificates)</br>
-	3.6 [How to configure the default SSL certificate](#configureDefaultCertificate)</br>
-	3.7 [Configuring DH param](#configureDHparam)</br>
-	3.8 [Load balancing among ingress backends](#loadBalancingAmongIngress)</br>
-	3.9 [Define a redirect in an ingress rule](#defineRediret)</br>
-	3.10 [Default backend](#defaultBackend)
-
-4. [ Contributing ](#contributing)
-5. [ Authors ](#authors)
-
-<a name="starting"></a>
 ## Starting :rocket:
 
-<a name="build"></a>
+### Deployment
+
+```shell
+root@k8s:~# kubectl apply -f https://raw.githubusercontent.com/zevenet/zproxy-ingress/master/yaml/zproxy-ingress-deplyment.yaml
+```
+
+Note:
+
+* Remember specifying the ingress controller in the ingress rule
+
+`
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test-001
+spec:
+  ingressClassName: zproxy-ingress
+` 
+  
+* Or set zproxy the default ingress controller:
+
+```shell
+root@k8s:~# kubectl apply -f https://raw.githubusercontent.com/zevenet/zproxy-ingress/master/yaml/examples/default-ingressclass.yaml
+```
+
+
+
 ### Build
 
 This project depends on ZEVENET CE repository to create the container with the latest zproxy package. So, this project
