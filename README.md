@@ -18,16 +18,16 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 
 ## Index
 
-- [Starting](#starting-)
+- [Starting](#starting-rocket)
 	- [Deployment](#deployment)
 	- [Build](#build)
 	- [Some commands to inspect the pod and container](#some-commands-to-inspect-the-pod-and-container)
-- [Settings](#settings-)
+- [Settings](#settings-gear)
 	- [Container configuration files](#container-configuration-files)
 	- [Environment varibles](#environment)
 	- [ConfigMaps](#configmaps)
 	- [Annotations](#annotations)
-- [Some notes](#some-notes-)
+- [Some notes](#some-notes-memo)
 	- [Ingress Namespace](#ingress-namespace)
 	- [How to link an ingress rule with zproxy-ingress](#how-to-link-an-ingress-rule-with-zproxy-ingress)
 	- [How to set up the default ingress controller](#how-to-set-up-the-default-ingress-controller)
@@ -38,8 +38,8 @@ The zproxy-ingress container contains two daemons, a GO client that connects wit
 	- [Load balancing among ingress backends](#load-balancing-among-ingress-backends)
 	- [Define a redirect in an ingress rule](#define-a-redirect-in-an-ingress-rule)
 	- [Default backend](#default-backend)
-- [Contributing](#contributing-)
-- [Authors](#authors-)
+- [Contributing](#contributing-clap)
+- [Authors](#authors-nerd_face)
 
 ## Starting :rocket:
 
@@ -82,7 +82,6 @@ root@k8s:~# ./build.sh
 root@k8s:~# kubectl apply -f yaml/
 ```
 
-<a name="commands"></a>
 ### Some commands to inspect the pod and container
 
 * Get the logs of the pod:
@@ -104,10 +103,8 @@ root@k8s:~# kubectl logs `kubectl get pods -n zproxy-ingress | grep zproxy | gre
 ```
 
 
-<a name="settings"></a>
 ## Settings :gear:
 
-<a name="configfiles"></a>
 ### Container configuration files
 
 Those configuration files defined the configuration that the container is configured. This configuration can be modified through the different k8s features (ENV, configmaps and annotations).
@@ -122,7 +119,6 @@ Those configuration files defined the configuration that the container is config
 
 *  Service: parameters for a zproxy services. The default values can be modified using configmap or can be specified for a service through annotations.
 
-<a name="environment"></a>
 ### Environment variables
 
 Some examples can be checked in the test: tests/010_env_params/
@@ -151,7 +147,6 @@ Variables for the global configuration of the zproxy daemon.
 * ClientTO: Specify how long zproxy will wait for a client request. After this long has passed without the client sending any data zproxy will close the connection.
 
 
-<a name="configmaps"></a>
 ### ConfigMaps
 
 Some examples can be checked in the test: tests/009_configmap/
@@ -233,7 +228,6 @@ The service parameters will be used as the default configuration for services. T
 * service-session-ttl: The time to live for an inactive client session (max session age) in seconds.
 
 
-<a name="annotations"></a>
 ### Annotations
 
 They are used to overwritten the global service configuration. The selected domain for zproxy annotations is "**`zproxy.ingress.kubernetes.io/`**".
@@ -256,15 +250,14 @@ The description about each annotation can be checked in the [configmap](https://
 * `zproxy.ingress.kubernetes.io/service-session-ttl`
 
 
-<a name="someNotes"></a>
+
 ## Some notes  :memo:
 
-<a name="ingressNamespace"></a>
+
 ### Ingress Namespace
 
 An ingress rule has assigned a namespace. The resources (secrets and services) that the rule manages have to be in the same namespace than the ingress rule
 
-<a name="linkAnIngressRule"></a>
 ### How to link an ingress rule with zproxy-ingress
 
 Zproxy-ingress will configure the ingress rules that contain the incressClassName **zproxy-ingress**.
@@ -280,7 +273,6 @@ spec:
   ...
 ```
 
-<a name="defaultIngressController"></a>
 ### How to set up the default ingress controller
 
 A Kubernetes IngressClass object is required to set the zproxy-ingress as the default one.
@@ -298,7 +290,6 @@ spec:
   controller: zevenet/ingress-controller
 ```
 
-<a name="certificatesWork"></a>
 ### How SSL certificates work
 
 HTTPS listener will be configured in the ingress rules that contain the **tls** field.
@@ -325,7 +316,6 @@ spec:
 ```
 
 
-<a name="configureCertificates"></a>
 ### How to configure SSL certificates
 
 SSL certificates have been integrated with Kubernetes  using the secret feature. Zproxy uses certificates with *pem* format, for that reason, the secrets should be created from a PEM file or using Kubunernetes *TLS* secrets (then, zproxy-ingress client will create the *pem* certificate).
@@ -345,14 +335,12 @@ root@k8s:~# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout <keyfile
 root@k8s:~# kubectl create secret tls <secretname> --key <keyfile> --cert <certfile> [-n namespace]
 ```
 
-<a name="configureDefaultCertificate"></a>
 ### How to configure the default SSL certificate
 
 To define a certificate as the default one when any other is used for an HTTP request, it has to comply with the following requirements:
 * It should be created using the common name '*' to mach any FQDN.
 * It has to be defined in the "**zproxy-ingress**" namespace.
 
-<a name="configureDHparam"></a>
 ### Configuring DH param
 
 The DH params file used to encrypt the HTTPS communication has been included in the container for saving time in the pod deployment, but, it is recommended to generate a new one and linked it with the zproxy-ingress configuration.
@@ -369,7 +357,6 @@ root@k8s:~# openssl dhparam -5 -out /tmp/dh2048.pem 2048
  The ENV variable **DHFile** (daemontset.yaml file) can be modified in order to change the DH param path inside the container.
 
 
-<a name="loadBalancingAmongIngress"></a>
 ### Load balancing among ingress backends
 
 Zproxy-ingress will load balance the incoming requests among different backends if there are several ingress rules with the same match information (host and URI).
@@ -399,7 +386,6 @@ spec:
           servicePort: 80
 ```
 
-<a name="defineRediret"></a>
 ### Define a redirect in an ingress rule
 
 A redirect can be configured as the response to a client in an ingress rule. If the redirect is configured, the backend struct from the ingress rule will be ignored.
@@ -411,7 +397,6 @@ The following annotations define the behavior of the redirect action:
 * zproxy.ingress.kubernetes.io/service-redirect-type: it specifies how to create the response URL regarding the incoming one. See the configmap "service-redirect-type" parameter for further information.
 
 
-<a name="defaultBackend"></a>
 ### Default backend
 
 Zproxy-ingress allows adding a default backend that will respond in case that any rule matches the incoming request (the *path* and *host* fields are not achieved).
@@ -436,7 +421,6 @@ spec:
     servicePort: 80
 ```
 
-<a name="contributing"></a>
 ## Contributing :clap:
 
 **Pull Requests are WELCOME!** Please submit any fixes or improvements:
@@ -445,7 +429,6 @@ spec:
 * [Submit Issues](https://github.com/zevenet/zproxy-ingress/issues)
 * [Pull Requests](https://github.com/zevenet/zproxy-ingress/pulls)
 
-<a name="authors"></a>
 ## Authors  :nerd_face:
 
 ZEVENET Team
